@@ -556,7 +556,7 @@ function MonkEC:InspectSpecialization()
 		self:Print("Blackout Kick cost is incorrect (" .. tostring(self.common.blackoutKick.cost) .. " vs 2).  Try switching specs and reloading.")
 	end
 	if self.common.touchOfDeath.cost ~= 3 then
-		self:Print("Touch of Death cost is incorrect (" .. tostring(self.common.touchOfDeath.cost) .. " vs 2).  Try switching specs and reloading.")
+		self:Print("Touch of Death cost is incorrect (" .. tostring(self.common.touchOfDeath.cost) .. " vs 3).  Try switching specs and reloading.")
 	end
 end
 
@@ -706,11 +706,16 @@ function MonkEC:CreatePriorityLists()
 						(self.frame.aoeToggle:GetValue() == true) 
 			end, 
 		},
-		-- {	spell = self.common.blackoutKick, 
-			-- condition = function(self, characterState) 
-				-- return UnitExists("target") and self:DumpChi(characterState)
-			-- end, 
-		-- },
+		{	spell = self.common.blackoutKick, 
+			condition = function(self, characterState) 
+				return UnitExists("target") and self:DumpChi(characterState)
+			end, 
+		},
+		{	spell = self.brewmaster.kegSmash, 
+			condition = function(self, characterState) 
+				return UnitExists("target") and self:EnergyHigh(characterState)
+			end, 
+		},
 		{	spell = self.common.tigerPalm, 
 			condition = function(self, characterState) 
 				return UnitExists("target")
