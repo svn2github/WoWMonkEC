@@ -551,6 +551,13 @@ function MonkEC:InspectSpecialization()
 	
 	self:DetermineChiGeneration()
 	self:DetermineSpellCooldowns()
+	
+	if self.common.blackoutKick.cost ~= 2 then
+		self:Print("Blackout Kick cost is incorrect (" .. tostring(self.common.blackoutKick.cost) .. " vs 2).  Try switching specs and reloading.")
+	end
+	if self.common.touchOfDeath.cost ~= 3 then
+		self:Print("Touch of Death cost is incorrect (" .. tostring(self.common.touchOfDeath.cost) .. " vs 2).  Try switching specs and reloading.")
+	end
 end
 
 function MonkEC:DetermineChiGeneration()
