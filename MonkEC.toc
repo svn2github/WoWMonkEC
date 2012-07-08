@@ -5,10 +5,6 @@
 ## Version: 1.0
 ## SavedVariables: MonkECDB
 ## OptionalDeps Age3, LibSharedMedia-3.0
-## X-Curse-Packaged-Version: Release 4.1
-## X-Curse-Project-Name: MonkEC - Monk Tank Priority Helper
-## X-Curse-Project-ID: MonkEC
-## X-Curse-Repository-ID: wow/MonkEC/mainline
 
 embeds.xml
 MonkEC.lua
