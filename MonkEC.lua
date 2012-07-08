@@ -329,7 +329,7 @@ local options = {
 					step = 1,
 					desc = "Sets the amount of chi that MonkEC will try to maintain",		
 					get = function() return MonkEC.db.profile.targetChi end,
-					set = "SetTargetChi",
+					set = "SetChiGoal",
 				},									
 				targetEnergy = {
 					type = "range",
@@ -340,7 +340,7 @@ local options = {
 					step = 5,
 					desc = "Sets the amount of energy that MonkEC will try to maintain",		
 					get = function() return MonkEC.db.profile.targetEnergy end,
-					set = "SetTargetEnergy",
+					set = "SetEnergyGoal",
 				},									
 				prot_priority = {
 					type = "group",
@@ -1057,7 +1057,7 @@ function MonkEC:ScaleBuff(buff, parentFrame, xOffset, yOffset, iconSize, scale)
 	buff.stackCountText:SetFont("Fonts\\FRIZQT__.TTFa", 10 * scale, "OUTLINE")
 end
 
-function MonkEC:SetTargetEnergy(info, energy)
+function MonkEC:SetEnergyGoal(info, energy)
 	if (tonumber(energy) < 0 or tonumber(energy) > 100) then
 		self:Print("Energy target value out of range (0-100)")
 	else
@@ -1065,7 +1065,7 @@ function MonkEC:SetTargetEnergy(info, energy)
 	end
 end
 
-function MonkEC:SetTargetChi(info, chi)
+function MonkEC:SetChiGoal(info, chi)
 	if (tonumber(chi) < 0 or tonumber(chi) > maxChi) then
 		self:Print("Chi target value out of range (0-" .. maxChi .. ")")
 	else
