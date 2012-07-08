@@ -582,6 +582,10 @@ function MonkEC:InspectSpecialization()
 		self:Print("Touch of Death cost is incorrect (" .. tostring(self.common.touchOfDeath.cost) .. " vs 3).  Working around it.")
 		self.common.touchOfDeath.cost = 3
 	end
+	if self.brewmaster.guard.cost ~= 2 then
+		self:Print("Guard cost is incorrect (" .. tostring(self.common.touchOfDeath.cost) .. " vs 2).  Working around it.")
+		self.brewmaster.guard.cost = 2
+	end
 end
 
 function MonkEC:DetermineChiGeneration()
@@ -623,8 +627,9 @@ function MonkEC:CreatePriorityLists()
 		{	spell = self.brewmaster.fortifyingBrew, condition = nil, },
 		{	spell = self.brewmaster.dampenHarm, condition = nil, },
 		{	spell = self.brewmaster.purifyingBrew, 
-			condition = function(self, value) 
-				return haveHealingElixirs; 
+			condition = function(self, characterState) 
+				return self:HaveHealingElixirs(characterState) and
+					self:StaggerTooHigh(characterState)
 			end, 
 		},
 		{	spell = self.talent.chiBurst, condition = nil, },
@@ -813,6 +818,7 @@ end
 function MonkEC:GatherCharacterState()
 	local state = {
 		stance = GetShapeshiftForm(),
+		haveHealingElixirs = haveHealingElixirs,
 		doAOE = self.db.profile.suggest_aoe,
 		inMeleeRange = IsSpellInRange(self.common.jab.name, "target") == 1,
 		currentHealthPercentage = UnitHealth("player") / UnitHealthMax("player") * 100,
@@ -910,6 +916,8 @@ function MonkEC:UpdateBuffsForSpell(spell, characterState)
 		characterState.weakenedBlowsSecondsLeft = 15
 	elseif spell.id == self.brewmaster.elusiveBrew.id then
 		characterState.elusiveBrewCount = 0;
+	elseif spell.id == self.brewmaster.purifyingBrew.id then
+		characterState.staggerTooHigh = false;
 	end
 end
 
@@ -949,6 +957,10 @@ end
 
 function MonkEC:StaggerTooHigh(characterState)
 	return characterState.staggerTooHigh
+end
+
+function MonkEC:HaveHealingElixirs(characterState)
+	return characterState.haveHealingElixirs
 end
 
 function MonkEC:DoElusiveBrew(characterState)
