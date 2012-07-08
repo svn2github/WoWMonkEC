@@ -47,9 +47,6 @@ local weakenedBlowsCount,weakenedBlowsSecondsLeft,weakenedBlowsSpell
 
 function MonkEC:GetSpellData(id) 
 	local name, _, icon, cost, _, powerType = GetSpellInfo(id); 
-	-- if id == 100784 then
-		-- self:Print("bok uses chi:" .. tostring(powerType == chiPowerType) .. " cost=" .. cost)
-	-- end
 
 	return { name=name, id=id, icon=icon, cost=cost, powerType=powerType } 
  end 
@@ -147,8 +144,8 @@ MonkEC.external = {
 	thunderclap = MonkEC:GetSpellData(115799),
 }
 
-MonkEC.trackableBuffs = {	"Weakened Blows", "Shuffle", "Elusive Brew", "Mortal Wounds", "Tiger Power", 
-							"Sanctuary of the Ox", "--------------" }
+MonkEC.trackableBuffs = {	"Weakened Blows", "Shuffle", "Elusive Brew", "Tiger Power", 
+							"Sanctuary of the Ox", "Mortal Wounds", "--------------" }
 
 ------------------------
 -- Defaults and Options
@@ -173,7 +170,9 @@ local defaults = {
 		suggest_touchOfDeath = false,
 		suggest_summonBlackOxStatue = false,
 		suggest_aoe = false,
-			
+		elusiveBrewThreshold = 4,
+		dangerousHealth = 20,
+		
 		prot_priority_1 = 1, -- 
 		prot_priority_2 = 2, -- 
 		prot_priority_3 = 3, -- 
@@ -341,6 +340,28 @@ local options = {
 					desc = "Sets the amount of energy that MonkEC will try to maintain",		
 					get = function() return MonkEC.db.profile.targetEnergy end,
 					set = "SetEnergyGoal",
+				},									
+				dangerousHealth = {
+					type = "range",
+					name = "Health percent to panic at",
+					order = 230,
+					min = 0,
+					max = 50,
+					step = 1,
+					desc = "Sets the health percentage where MonkEC will suggest survival abilities",		
+					get = function() return MonkEC.db.profile.dangerousHealth end,
+					set = "SetDangerousHealth", 
+				},									
+				elusiveBrewThreshold = {
+					type = "range",
+					name = "Elusive Brew casting threshold",
+					order = 240,
+					min = 0,
+					max = 20,
+					step = 1,
+					desc = "Sets the number of Elusive Brew stacks at which MonkEC will be suggest casting",		
+					get = function() return MonkEC.db.profile.elusiveBrewThreshold end,
+					set = "SetElusiveBrewThreshold",
 				},									
 				prot_priority = {
 					type = "group",
@@ -552,6 +573,7 @@ function MonkEC:InspectSpecialization()
 	self:DetermineChiGeneration()
 	self:DetermineSpellCooldowns()
 	
+	-- TODO remove when bug is fixed
 	if self.common.blackoutKick.cost ~= 2 then
 		self:Print("Blackout Kick cost is incorrect (" .. tostring(self.common.blackoutKick.cost) .. " vs 2).  Working around it.")
 		self.common.blackoutKick.cost = 2
@@ -685,13 +707,13 @@ function MonkEC:CreatePriorityLists()
 		},
 		{	spell = self.common.spinningCraneKick, 
 			condition = function(self, characterState) 
-				return (self.frame.aoeToggle:GetValue() == true)
+				return self:DoAOE(characterState)
 			end, 
 		},
 		{	spell = self.common.jab, 
 			condition = function(self, characterState) 
 				return UnitExists("target") and
-						(self.frame.aoeToggle:GetValue() == false) 
+						not self:DoAOE(characterState) 
 			end, 
 		},
 		{	spell = self.brewmaster.guard, 
@@ -705,7 +727,7 @@ function MonkEC:CreatePriorityLists()
 		{	spell = self.brewmaster.breathOfFire, 
 			condition = function(self, characterState) 
 				return UnitExists("target") and
-						(self.frame.aoeToggle:GetValue() == true) 
+						self:DoAOE(characterState) 
 			end, 
 		},
 		{	spell = self.common.blackoutKick, 
@@ -747,6 +769,315 @@ local function OnUpdate(this, elapsed)
 
 		timeSinceLastUpdate = 0
 	end
+end
+
+------------------------------------
+-- Update the DPS Priority Queue (Prot)
+------------------------------------
+function MonkEC:UpdateQueue()
+	-- Find the current GCD
+	local currentStart,currentBaseGCD = GetSpellCooldown(self.common.jab.id)
+	local currentGCD = 0
+	if (currentStart > 0) then
+		currentGCD = currentBaseGCD - (GetTime() - currentStart)
+	end
+	
+	self:UpdateCooldowns(currentGCD, MonkEC.common)
+	self:UpdateCooldowns(currentGCD, MonkEC.talent)
+	self:UpdateCooldowns(currentGCD, MonkEC.brewmaster)
+	
+	local characterState = self:GatherCharacterState()
+
+	for i = 1,3 do
+--self:Print("loop " .. i .. " gcd=" .. currentGCD .. " energy=" .. characterState.energy .. " chi=" .. characterState.chi)
+		local spell = self:FindNextSpell(currentGCD, characterState)
+		self.frame.abilityFrame[i].spell = spell
+		if spell ~= nil then
+			self:UpdateStateForSpellcast(spell, characterState)
+		end
+		currentGCD = currentGCD + theGCD
+	end
+end
+
+function MonkEC:UpdateCooldowns(currentGCD, spellList)
+	for key,spell in pairs(spellList) do
+		local startTime,duration = GetSpellCooldown(spell.id)
+		if (startTime > 0) then
+			spell.cooldown = duration - (GetTime() - startTime)
+		else
+			spell.cooldown = 0
+		end
+	end
+end
+
+function MonkEC:GatherCharacterState()
+	local state = {
+		stance = GetShapeshiftForm(),
+		doAOE = self.db.profile.suggest_aoe,
+		inMeleeRange = IsSpellInRange(self.common.jab.name, "target") == 1,
+		currentHealthPercentage = UnitHealth("player") / UnitHealthMax("player") * 100,
+		chi = UnitPower("player", SPELL_POWER_LIGHT_FORCE),
+		energy = UnitPower("player"),
+		
+		playerHasLegacyOfTheEmperor = UnitBuff("player", self.common.legacyOfTheEmperor.name) ~= nil,
+		playerHasSanctuaryOfTheOx = UnitBuff("player", self.buff.sanctuaryOfTheOx.name) ~= nil,
+		
+		shuffleSecondsLeft = shuffleSecondsLeft,
+		staggerTooHigh = (UnitDebuff("player", self.debuff.moderateStagger.name) ~= nil) or 
+						(UnitDebuff("player", self.debuff.heavyStagger.name) ~= nil),
+		weakenedBlowsSecondsLeft = weakenedBlowsSecondsLeft,
+		tigerPowerCount = tigerPowerCount,
+		tigerPowerSecondsLeft = tigerPowerSecondsLeft,
+		elusiveBrewCount = elusiveBrewCount,
+	}
+		
+	if state.doAOE == nil then
+		state.doAOE = false
+	end
+		
+	if state.shuffleSecondsLeft == nil then
+		state.shuffleSecondsLeft = 0
+	end
+	
+	if state.elusiveBrewCount == nil then
+		state.elusiveBrewCount = 0
+	end
+	
+	if state.tigerPowerCount == nil then
+		state.tigerPowerCount = 0
+	end
+	
+	if state.tigerPowerSecondsLeft == nil then
+		state.tigerPowerSecondsLeft = 0
+	end
+	
+	if state.weakenedBlowsSecondsLeft == nil then
+		state.weakenedBlowsSecondsLeft = 0
+	end
+	
+	return state
+end
+
+function MonkEC:UpdateStateForSpellcast(spell, characterState)
+	self:ConsumePowerForSpell(spell, characterState)
+	self:GenerateChiFromSpell(spell, characterState)
+	self:UpdateBuffsForSpell(spell, characterState)
+	self:IncreaseCooldown(spell)
+	self:NextGCD(characterState)
+end
+
+function MonkEC:NextGCD(characterState)
+	characterState.energy = characterState.energy + energyGeneratedPerGCD
+	characterState.shuffleSecondsLeft = characterState.shuffleSecondsLeft - 1
+	characterState.tigerPowerSecondsLeft = characterState.tigerPowerSecondsLeft - 1
+	characterState.weakenedBlowsSecondsLeft = characterState.weakenedBlowsSecondsLeft - 1
+end
+
+function MonkEC:ConsumePowerForSpell(spell, characterState)
+	if spell.powerType == energyPowerType then
+		characterState.energy = characterState.energy - spell.cost
+	elseif spell.powerType == chiPowerType then
+		characterState.chi = characterState.chi - spell.cost
+	end	
+end
+
+function MonkEC:GenerateChiFromSpell(spell, characterState)
+	if spell.id == self.common.expelHarm.id or
+		spell.id == self.common.jab.id or
+		spell.id == self.common.spinningCraneKick.id or
+		spell.id == self.brewmaster.kegSmash.id then
+		characterState.chi = characterState.chi + 1
+	elseif spell.id == self.talent.chiBrew.id then
+		characterState.chi = maxChi
+	end
+end
+
+function MonkEC:UpdateBuffsForSpell(spell, characterState)
+	if spell.id == self.buff.sanctuaryOfTheOx.id then
+		characterState.playerHasSanctuaryOfTheOx = true
+	elseif spell.id == self.common.legacyOfTheEmperor.id then
+		characterState.playerHasLegacyOfTheEmperor = true
+	elseif spell.id == self.brewmaster.stanceOfTheSturdyOx.id then
+		characterState.stance = brewmasterStance
+	elseif spell.id == self.common.blackoutKick.id then
+		characterState.shuffleSecondsLeft = 8
+	elseif spell.id == self.common.tigerPalm.id then
+		if characterState.tigerPowerCount < 3 then
+			characterState.tigerPowerCount = characterState.tigerPowerCount + 1
+		end
+		characterState.tigerPowerSecondsLeft = 20
+	elseif spell.id == self.brewmaster.dizzyingHaze.id or spell.id == self.brewmaster.kegSmash.id then
+		characterState.weakenedBlowsSecondsLeft = 15
+	elseif spell.id == self.brewmaster.elusiveBrew.id then
+		characterState.elusiveBrewCount = 0;
+	end
+end
+
+function MonkEC:IncreaseCooldown(spell)
+	if spell.cooldownLength == nil then 
+		spell.cooldown = spell.cooldown + theGCD
+	else
+		spell.cooldown = spell.cooldown + spell.cooldownLength
+	end
+end
+
+function MonkEC:FindNextSpell(currentGCD, characterState)
+	local spell = nil
+	
+	if talentSpec == talentSpecBrewmaster then
+		if self:InDesperateNeedOfHealing(characterState) then
+			spell = self:FindNextSpellFrom(desperationPriorities, currentGCD, characterState)
+		else
+			spell = self:FindNextSpellFrom(brewmasterPriorities, currentGCD, characterState)
+		end
+	end
+
+	return spell
+end
+
+function MonkEC:InDesperateNeedOfHealing(characterState)
+	return characterState.currentHealthPercentage < MonkEC.db.profile.dangerousHealth
+end
+
+function MonkEC:ChiLow(characterState)
+	return characterState.chi < MonkEC.db.profile.targetChi
+end
+
+function MonkEC:EnergyHigh(characterState)
+	return characterState.energy > MonkEC.db.profile.targetEnergy
+end
+
+function MonkEC:StaggerTooHigh(characterState)
+	return characterState.staggerTooHigh
+end
+
+function MonkEC:DoElusiveBrew(characterState)
+	return characterState.elusiveBrewCount > MonkEC.db.profile.elusiveBrewThreshold
+end
+
+function MonkEC:DoAOE(characterState)
+	return characterState.doAOE
+end
+
+function MonkEC:ChiWillNotOverflow(spell, characterState)
+	local willNotOverflow = true
+
+	if spell.chiGenerated ~= nil then
+		willNotOverflow = (characterState.chi + spell.chiGenerated) <= maxChi
+		--MonkEC:Print("ChiWillNotOverflow: " .. tostring(willNotOverflow) .. " = (" .. characterState.chi .. " + " .. spell.chiGenerated .. ") <= " .. maxChi)
+	end
+	
+	return willNotOverflow
+end
+
+function MonkEC:BuffWearingOffSoon(spell, characterState)
+	local wearingOffSoon = true
+	
+	if spell.id == self.buff.shuffle.id then
+--self:Print("Checking shuffle characterState.shuffleSecondsLeft > theGCD - " .. characterState.shuffleSecondsLeft .. ">" .. theGCD .. "=" .. tostring(characterState.shuffleSecondsLeft > theGCD))
+		if characterState.shuffleSecondsLeft > theGCD then
+			wearingOffSoon = false
+		end
+	end
+	
+	return wearingOffSoon
+end
+
+function MonkEC:DebuffWearingOffSoon(spell, characterState)
+	local wearingOffSoon = true
+	
+	if spell.id == self.debuff.weakenedBlows.id then
+		if characterState.weakenedBlowsSecondsLeft > theGCD then
+			wearingOffSoon = false
+		end
+	end
+	
+	return wearingOffSoon
+end
+
+function MonkEC:DamagedEnough(characterState)
+	return characterState.currentHealthPercentage < 80
+end
+
+function MonkEC:DumpChi(characterState)
+	return characterState.chi > 3
+end
+
+function MonkEC:NeedsMoreTigerPower(characterState)
+	return characterState.tigerPowerCount < 3
+end
+
+function MonkEC:FindNextSpellFrom(priorities, currentGCD, characterState)
+	for key,candidate in pairs(priorities) do
+		if candidate.spell ~= nil then
+			local candidateAccepted = true
+			if candidate.condition ~= nil then
+				candidateAccepted = candidate.condition(self, characterState)
+			end
+			
+			if candidateAccepted then
+				candidateAccepted = self:CanPerformSpell(candidate.spell, currentGCD, characterState)
+			end
+			
+			if candidateAccepted then
+				return candidate.spell
+			end
+		end
+	end
+	
+	return nil
+end
+
+function MonkEC:CanPerformSpell(spell, currentGCD, characterState)
+	local canPerform = true
+	
+	-- if spell.id == self.common.blackoutKick.id then
+		-- self:Print("bok uses chi:" .. tostring(spell.powerType == chiPowerType) .. " cost=" .. spell.cost
+		-- .. " and " .. characterState.chi .. " is available")
+	-- end
+	if spell.powerType == energyPowerType then
+		canPerform = characterState.energy >= spell.cost
+	elseif spell.powerType == chiPowerType then
+		canPerform = characterState.chi >= spell.cost
+	end
+	
+	if canPerform then
+		canPerform = spell.cooldown <= currentGCD
+		if canPerform then
+			canPerform = self:ChiWillNotOverflow(spell, characterState)
+			-- if not canPerform then
+				-- self:Print(spell.name .. " would overflow chi " .. characterState.chi)
+			-- end
+		-- else
+			-- self:Print(spell.name .. " will be on cooldown until " .. spell.cooldown)
+		end
+	end
+
+	return canPerform
+end
+
+function MonkEC:StanceIsWrong(characterState)
+	local stanceIsWrong = true
+	
+	if talentSpec == talentSpecBrewmaster and characterState.stance == brewmasterStance then
+		stanceIsWrong = false
+	end
+
+	return stanceIsWrong
+end
+
+function MonkEC:PlayerHasBuff(spell, characterState)
+	local hasBuff = false
+
+	if spell.id == self.buff.sanctuaryOfTheOx.id then
+		hasBuff = characterState.playerHasSanctuaryOfTheOx
+	elseif spell.id == self.common.legacyOfTheEmperor.id then
+		hasBuff = characterState.playerHasLegacyOfTheEmperor
+	elseif spell.id == self.brewmaster.shuffle.id then
+		hasBuff = characterState.shuffleSecondsLeft > 0
+	end
+	
+	return hasBuff
 end
 
 -----------------------------------------------
@@ -791,7 +1122,8 @@ function MonkEC:InitAbilityFrame()
 	aoeToggle = AceGUI:Create("CheckBox")
 	aoeToggle:SetLabel("AOE")
 	aoeToggle:SetType("checkbox")
-	aoeToggle:SetValue(true)
+	aoeToggle:SetValue(self.db.profile.suggest_aoe)
+	aoeToggle:SetCallback("OnValueChanged", function(widget, callback) MonkEC.db.profile.suggest_aoe = widget:GetValue() end)
 	aoeToggle.frame:ClearAllPoints()
 	aoeToggle.frame:SetPoint("BOTTOMLEFT", baseFrame, "BOTTOMLEFT", 
 			aoeToggleXOffset * scale, aoeToggleYOffset * scale)
@@ -1079,6 +1411,22 @@ function MonkEC:SetEnergyGoal(info, energy)
 	end
 end
 
+function MonkEC:SetDangerousHealth(info, percentage)
+	if (tonumber(percentage) < 0 or tonumber(percentage) > 50) then
+		self:Print("Health percent value out of range (0-50)")
+	else
+		self.db.profile.dangerousHealth = percentage
+	end
+end
+
+function MonkEC:SetElusiveBrewThreshold(info, count)
+	if (tonumber(count) < 0 or tonumber(count) > 20) then
+		self:Print("Health percent value out of range (0-20)")
+	else
+		self.db.profile.elusiveBrewThreshold = count
+	end
+end
+
 function MonkEC:SetChiGoal(info, chi)
 	if (tonumber(chi) < 0 or tonumber(chi) > maxChi) then
 		self:Print("Chi target value out of range (0-" .. maxChi .. ")")
@@ -1096,306 +1444,6 @@ function MonkEC:ChatCommand(input)
 	else
 		self:Print("MonkEC: Enter \"/MonkEC config\" for configuration GUI")
 	end
-end
-
-------------------------------------
--- Update the DPS Priority Queue (Prot)
-------------------------------------
-function MonkEC:UpdateQueue()
-	-- Find the current GCD
-	local currentStart,currentBaseGCD = GetSpellCooldown(self.common.jab.id)
-	local currentGCD = 0
-	if (currentStart > 0) then
-		currentGCD = currentBaseGCD - (GetTime() - currentStart)
-	end
-	
-	self:UpdateCooldowns(currentGCD, MonkEC.common)
-	self:UpdateCooldowns(currentGCD, MonkEC.talent)
-	self:UpdateCooldowns(currentGCD, MonkEC.brewmaster)
-	
-	local characterState = self:GatherCharacterState()
-
-	for i = 1,3 do
---self:Print("loop " .. i .. " gcd=" .. currentGCD .. " energy=" .. characterState.energy .. " chi=" .. characterState.chi)
-		local spell = self:FindNextSpell(currentGCD, characterState)
-		self.frame.abilityFrame[i].spell = spell
-		if spell ~= nil then
-			self:UpdateStateForSpellcast(spell, characterState)
-		end
-		currentGCD = currentGCD + theGCD
-	end
-end
-
-function MonkEC:UpdateCooldowns(currentGCD, spellList)
-	for key,spell in pairs(spellList) do
-		local startTime,duration = GetSpellCooldown(spell.id)
-		if (startTime > 0) then
-			spell.cooldown = duration - (GetTime() - startTime)
-		else
-			spell.cooldown = 0
-		end
-	end
-end
-
-function MonkEC:GatherCharacterState()
-	local state = {
-		stance = GetShapeshiftForm(),
-		inMeleeRange = IsSpellInRange(MonkEC.common.jab.name, "target") == 1,
-		currentHealthPercentage = UnitHealth("player") / UnitHealthMax("player") * 100,
-		chi = UnitPower("player", SPELL_POWER_LIGHT_FORCE),
-		energy = UnitPower("player"),
-		
-		playerHasLegacyOfTheEmperor = UnitBuff("player", self.common.legacyOfTheEmperor.name) ~= nil,
-		playerHasSanctuaryOfTheOx = UnitBuff("player", self.buff.sanctuaryOfTheOx.name) ~= nil,
-		
-		shuffleSecondsLeft = shuffleSecondsLeft,
-		staggerTooHigh = (UnitDebuff("player", self.debuff.moderateStagger.name) ~= nil) or 
-						(UnitDebuff("player", self.debuff.heavyStagger.name) ~= nil),
-		weakenedBlowsSecondsLeft = weakenedBlowsSecondsLeft,
-		tigerPowerCount = tigerPowerCount,
-		tigerPowerSecondsLeft = tigerPowerSecondsLeft,
-		elusiveBrewCount = elusiveBrewCount,
-	}
-		
-	if state.shuffleSecondsLeft == nil then
-		state.shuffleSecondsLeft = 0
-	end
-	
-	if state.elusiveBrewCount == nil then
-		state.elusiveBrewCount = 0
-	end
-	
-	if state.tigerPowerCount == nil then
-		state.tigerPowerCount = 0
-	end
-	
-	if state.tigerPowerSecondsLeft == nil then
-		state.tigerPowerSecondsLeft = 0
-	end
-	
-	if state.weakenedBlowsSecondsLeft == nil then
-		state.weakenedBlowsSecondsLeft = 0
-	end
-	
-	return state
-end
-
-function MonkEC:UpdateStateForSpellcast(spell, characterState)
-	self:ConsumePowerForSpell(spell, characterState)
-	self:GenerateChiFromSpell(spell, characterState)
-	self:UpdateBuffsForSpell(spell, characterState)
-	self:IncreaseCooldown(spell)
-	self:NextGCD(characterState)
-end
-
-function MonkEC:NextGCD(characterState)
-	characterState.energy = characterState.energy + energyGeneratedPerGCD
-	characterState.shuffleSecondsLeft = characterState.shuffleSecondsLeft - 1
-	characterState.tigerPowerSecondsLeft = characterState.tigerPowerSecondsLeft - 1
-	characterState.weakenedBlowsSecondsLeft = characterState.weakenedBlowsSecondsLeft - 1
-end
-
-function MonkEC:ConsumePowerForSpell(spell, characterState)
-	if spell.powerType == energyPowerType then
-		characterState.energy = characterState.energy - spell.cost
-	elseif spell.powerType == chiPowerType then
-		characterState.chi = characterState.chi - spell.cost
-	end	
-end
-
-function MonkEC:GenerateChiFromSpell(spell, characterState)
-	if spell.id == self.common.expelHarm.id or
-		spell.id == self.common.jab.id or
-		spell.id == self.common.spinningCraneKick.id or
-		spell.id == self.brewmaster.kegSmash.id then
-		characterState.chi = characterState.chi + 1
-	elseif spell.id == self.talent.chiBrew.id then
-		characterState.chi = maxChi
-	end
-end
-
-function MonkEC:UpdateBuffsForSpell(spell, characterState)
-	if spell.id == self.buff.sanctuaryOfTheOx.id then
-		characterState.playerHasSanctuaryOfTheOx = true
-	elseif spell.id == self.common.legacyOfTheEmperor.id then
-		characterState.playerHasLegacyOfTheEmperor = true
-	elseif spell.id == self.brewmaster.stanceOfTheSturdyOx.id then
-		characterState.stance = brewmasterStance
-	elseif spell.id == self.common.blackoutKick.id then
-		characterState.shuffleSecondsLeft = 8
-	elseif spell.id == self.common.tigerPalm.id then
-		if characterState.tigerPowerCount < 3 then
-			characterState.tigerPowerCount = characterState.tigerPowerCount + 1
-		end
-		characterState.tigerPowerSecondsLeft = 20
-	elseif spell.id == self.brewmaster.dizzyingHaze.id or spell.id == self.brewmaster.kegSmash.id then
-		characterState.weakenedBlowsSecondsLeft = 15
-	elseif spell.id == self.brewmaster.elusiveBrew.id then
-		characterState.elusiveBrewCount = 0;
-	end
-end
-
-function MonkEC:IncreaseCooldown(spell)
-	if spell.cooldownLength == nil then 
-		spell.cooldown = spell.cooldown + theGCD
-	else
-		spell.cooldown = spell.cooldown + spell.cooldownLength
-	end
-end
-
-function MonkEC:FindNextSpell(currentGCD, characterState)
-	local spell = nil
-	
-	if talentSpec == talentSpecBrewmaster then
-		if self:InDesperateNeedOfHealing(characterState) then
-			spell = self:FindNextSpellFrom(desperationPriorities, currentGCD, characterState)
-		else
-			spell = self:FindNextSpellFrom(brewmasterPriorities, currentGCD, characterState)
-		end
-	end
-
-	return spell
-end
-
-function MonkEC:InDesperateNeedOfHealing(characterState)
-	return characterState.currentHealthPercentage < 20
-end
-
-function MonkEC:ChiLow(characterState)
-	return characterState.chi < MonkEC.db.profile.targetChi
-end
-
-function MonkEC:EnergyHigh(characterState)
-	return characterState.energy > MonkEC.db.profile.targetEnergy
-end
-
-function MonkEC:StaggerTooHigh(characterState)
-	return characterState.staggerTooHigh
-end
-
-function MonkEC:DoElusiveBrew(characterState)
-	return characterState.elusiveBrewCount > 4
-end
-
-function MonkEC:ChiWillNotOverflow(spell, characterState)
-	local willNotOverflow = true
-
-	if spell.chiGenerated ~= nil then
-		willNotOverflow = (characterState.chi + spell.chiGenerated) <= maxChi
-		--MonkEC:Print("ChiWillNotOverflow: " .. tostring(willNotOverflow) .. " = (" .. characterState.chi .. " + " .. spell.chiGenerated .. ") <= " .. maxChi)
-	end
-	
-	return willNotOverflow
-end
-
-function MonkEC:BuffWearingOffSoon(spell, characterState)
-	local wearingOffSoon = true
-	
-	if spell.id == self.buff.shuffle.id then
---self:Print("Checking shuffle characterState.shuffleSecondsLeft > theGCD - " .. characterState.shuffleSecondsLeft .. ">" .. theGCD .. "=" .. tostring(characterState.shuffleSecondsLeft > theGCD))
-		if characterState.shuffleSecondsLeft > theGCD then
-			wearingOffSoon = false
-		end
-	end
-	
-	return wearingOffSoon
-end
-
-function MonkEC:DebuffWearingOffSoon(spell, characterState)
-	local wearingOffSoon = true
-	
-	if spell.id == self.debuff.weakenedBlows.id then
-		if characterState.weakenedBlowsSecondsLeft > theGCD then
-			wearingOffSoon = false
-		end
-	end
-	
-	return wearingOffSoon
-end
-
-function MonkEC:DamagedEnough(characterState)
-	return characterState.currentHealthPercentage < 80
-end
-
-function MonkEC:DumpChi(characterState)
-	return characterState.chi > 3
-end
-
-function MonkEC:NeedsMoreTigerPower(characterState)
-	return characterState.tigerPowerCount < 3
-end
-
-function MonkEC:FindNextSpellFrom(priorities, currentGCD, characterState)
-	for key,candidate in pairs(priorities) do
-		if candidate.spell ~= nil then
-			local candidateAccepted = true
-			if candidate.condition ~= nil then
-				candidateAccepted = candidate.condition(self, characterState)
-			end
-			
-			if candidateAccepted then
-				candidateAccepted = self:CanPerformSpell(candidate.spell, currentGCD, characterState)
-			end
-			
-			if candidateAccepted then
-				return candidate.spell
-			end
-		end
-	end
-	
-	return nil
-end
-
-function MonkEC:CanPerformSpell(spell, currentGCD, characterState)
-	local canPerform = true
-	
-	-- if spell.id == self.common.blackoutKick.id then
-		-- self:Print("bok uses chi:" .. tostring(spell.powerType == chiPowerType) .. " cost=" .. spell.cost
-		-- .. " and " .. characterState.chi .. " is available")
-	-- end
-	if spell.powerType == energyPowerType then
-		canPerform = characterState.energy >= spell.cost
-	elseif spell.powerType == chiPowerType then
-		canPerform = characterState.chi >= spell.cost
-	end
-	
-	if canPerform then
-		canPerform = spell.cooldown <= currentGCD
-		if canPerform then
-			canPerform = self:ChiWillNotOverflow(spell, characterState)
-			-- if not canPerform then
-				-- self:Print(spell.name .. " would overflow chi " .. characterState.chi)
-			-- end
-		-- else
-			-- self:Print(spell.name .. " will be on cooldown until " .. spell.cooldown)
-		end
-	end
-
-	return canPerform
-end
-
-function MonkEC:StanceIsWrong(characterState)
-	local stanceIsWrong = true
-	
-	if talentSpec == talentSpecBrewmaster and characterState.stance == brewmasterStance then
-		stanceIsWrong = false
-	end
-
-	return stanceIsWrong
-end
-
-function MonkEC:PlayerHasBuff(spell, characterState)
-	local hasBuff = false
-
-	if spell.id == self.buff.sanctuaryOfTheOx.id then
-		hasBuff = characterState.playerHasSanctuaryOfTheOx
-	elseif spell.id == self.common.legacyOfTheEmperor.id then
-		hasBuff = characterState.playerHasLegacyOfTheEmperor
-	elseif spell.id == self.brewmaster.shuffle.id then
-		hasBuff = characterState.shuffleSecondsLeft > 0
-	end
-	
-	return hasBuff
 end
 
 ------------------------------------
@@ -1494,11 +1542,11 @@ function MonkEC:GetBuffInfo(num)
 	elseif num == 3 then
 		return elusiveBrewSpell,elusiveBrewSecondsLeft,elusiveBrewCount
 	elseif num == 4 then
-		return mortalWoundsIcon,mortalWoundsSecondsLeft,mortalWoundsCount
-	elseif num == 5 then
 		return tigerPowerSpell,tigerPowerSecondsLeft,tigerPowerCount
-	else
+	elseif num == 5 then
 		return sanctuaryOfTheOxSpell,sanctuaryOfTheOxTime,sanctuaryOfTheOxCount
+	else
+		return mortalWoundsIcon,mortalWoundsSecondsLeft,mortalWoundsCount
 	end
 
 	return buffInfo
