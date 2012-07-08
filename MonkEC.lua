@@ -553,10 +553,12 @@ function MonkEC:InspectSpecialization()
 	self:DetermineSpellCooldowns()
 	
 	if self.common.blackoutKick.cost ~= 2 then
-		self:Print("Blackout Kick cost is incorrect (" .. tostring(self.common.blackoutKick.cost) .. " vs 2).  Try switching specs and reloading.")
+		self:Print("Blackout Kick cost is incorrect (" .. tostring(self.common.blackoutKick.cost) .. " vs 2).  Working around it.")
+		self.common.blackoutKick.cost = 2
 	end
 	if self.common.touchOfDeath.cost ~= 3 then
-		self:Print("Touch of Death cost is incorrect (" .. tostring(self.common.touchOfDeath.cost) .. " vs 3).  Try switching specs and reloading.")
+		self:Print("Touch of Death cost is incorrect (" .. tostring(self.common.touchOfDeath.cost) .. " vs 3).  Working around it.")
+		self.common.touchOfDeath.cost = 3
 	end
 end
 
@@ -1149,15 +1151,18 @@ function MonkEC:GatherCharacterState()
 		shuffleSecondsLeft = shuffleSecondsLeft,
 		staggerTooHigh = (UnitDebuff("player", self.debuff.moderateStagger.name) ~= nil) or 
 						(UnitDebuff("player", self.debuff.heavyStagger.name) ~= nil),
-
 		weakenedBlowsSecondsLeft = weakenedBlowsSecondsLeft,
-		
 		tigerPowerCount = tigerPowerCount,
 		tigerPowerSecondsLeft = tigerPowerSecondsLeft,
+		elusiveBrewCount = elusiveBrewCount,
 	}
 		
 	if state.shuffleSecondsLeft == nil then
 		state.shuffleSecondsLeft = 0
+	end
+	
+	if state.elusiveBrewCount == nil then
+		state.elusiveBrewCount = 0
 	end
 	
 	if state.tigerPowerCount == nil then
@@ -1225,6 +1230,8 @@ function MonkEC:UpdateBuffsForSpell(spell, characterState)
 		characterState.tigerPowerSecondsLeft = 20
 	elseif spell.id == self.brewmaster.dizzyingHaze.id or spell.id == self.brewmaster.kegSmash.id then
 		characterState.weakenedBlowsSecondsLeft = 15
+	elseif spell.id == self.brewmaster.elusiveBrew.id then
+		characterState.elusiveBrewCount = 0;
 	end
 end
 
@@ -1267,7 +1274,7 @@ function MonkEC:StaggerTooHigh(characterState)
 end
 
 function MonkEC:DoElusiveBrew(characterState)
-	return (elusiveBrewCount ~= nil) and (elusiveBrewCount > 4)
+	return characterState.elusiveBrewCount > 4
 end
 
 function MonkEC:ChiWillNotOverflow(spell, characterState)
