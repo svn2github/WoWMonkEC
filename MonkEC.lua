@@ -113,10 +113,6 @@ MonkEC.brewmaster = {
 	summonBlackOxStatue = MonkEC:GetSpellData(115315),
 }
 
-MonkEC.windwalker = {
-	risingSunKick = MonkEC:GetSpellData(107428),
-}
-
 -- Spell Details for Buffs
 MonkEC.buff = {
 	shuffle	= MonkEC:GetSpellData(115307),
@@ -152,6 +148,10 @@ MonkEC.trackableBuffs = {	"Weakened Blows", "Shuffle", "Elusive Brew", "Tiger Po
 ------------------------
 local defaults = {
 	profile = {
+		enabled = true,
+		isLocked = false,
+		showOnlyIC = false,
+
 		frame_width = 190,
 		frame_height = 80,
 		frame_x = 400,
@@ -164,7 +164,6 @@ local defaults = {
 		buff_height = 50,
 		buff_scale = 1.0,
 		buff_isShown = true,
-		buff_isShownProt = true,
 
 		suggest_guard = false,
 		suggest_touchOfDeath = false,
@@ -173,36 +172,14 @@ local defaults = {
 		elusiveBrewThreshold = 4,
 		dangerousHealth = 20,
 		
-		prot_priority_1 = 1, -- 
-		prot_priority_2 = 2, -- 
-		prot_priority_3 = 3, -- 
-		prot_priority_4 = 4, -- 
-		prot_priority_5 = 5, -- 
-		prot_priority_6 = 6, -- 
-		prot_priority_7 = 7, -- 
-		prot_priority_8 = 8, -- 
-		prot_priority_9 = 9, -- 
-		prot_priority_10 = 10, -- 
-		sw_stacks = 3,
-		time_in_combat = 10,
-		revenge_override = true,
-				
 		tracked_buffs_1 = 1,
 		tracked_buffs_2 = 2,
 		tracked_buffs_3 = 3,
 		tracked_buffs_4 = 4,
-			
-		hs_threshold = 50,
-		hs_threshold_prot = 50,
-		ability_buffer = 0.2,
 				
 		icon_size = 64,
 		icon_size_small = 48,
 		icon_size_tiny = 32,				
-		isLocked = false,
-		showOnlyIC = false,
-		enabled = true,
-		enable_prot = true,
 	},
 }
 
@@ -238,6 +215,17 @@ local options = {
 					name = "Ability Queue Frame",
 					order = 105,
 				},
+				enable = {
+					type = "toggle",
+					name = "Enable ability queue",
+					width = "double",
+					order = 110,
+					get = function() return MonkEC.db.profile.enabled end,
+					set = function() 
+									MonkEC.db.profile.enabled = not MonkEC.db.profile.enabled
+									MonkEC:UpdateFrameVisibility()
+								end,
+				},
 				scale = {
 					type = "range",
 					name = "Scale",
@@ -264,18 +252,6 @@ local options = {
 					desc = "Sets the Y-Coordinate of the MonkEC Frame",
 					get = function() return MonkEC.db.profile.frame_y end,
 					set = "SetYCoord",
-				},
-				buffer = {
-					type = "range",
-					name = "Ability Queue Priority Delay",
-					order = 136,
-					min = 0.1,
-					max = 1.45,
-					step = 0.05,
-					width = "double",
-					desc = "How long we should stall to wait for a higher priority ability. Example: Bloodthirst on 0.2 second cooldown, don't waste the GCD on slam.",		
-					get = function() return MonkEC.db.profile.ability_buffer end,
-					set = function(self, key) MonkEC.db.profile.ability_buffer = key end,
 				},
 				header2 = {
 					type = "header",
@@ -306,14 +282,6 @@ local options = {
 					get = function() return MonkEC.db.profile.suggest_guard end,
 					set = function() MonkEC.db.profile.suggest_guard = not MonkEC.db.profile.suggest_guard end,
 				},
-				suggestOpeners = {
-					type = "toggle",
-					name = "Openers",
-					desc = "Will suggest openers.",
-					order = 170,
-					get = function() return MonkEC.db.profile.suggest_openers end,
-					set = function() MonkEC.db.profile.suggest_openers = not MonkEC.db.profile.suggest_openers end,
-				},
 				header3 = {
 					type = "header",
 					name = "Resource Thresholds",
@@ -343,7 +311,7 @@ local options = {
 				},									
 				dangerousHealth = {
 					type = "range",
-					name = "Health percent to panic at",
+					name = "Health Panic Threshold",
 					order = 230,
 					min = 0,
 					max = 50,
@@ -354,7 +322,7 @@ local options = {
 				},									
 				elusiveBrewThreshold = {
 					type = "range",
-					name = "Elusive Brew casting threshold",
+					name = "Elusive Brew Threshold",
 					order = 240,
 					min = 0,
 					max = 20,
@@ -363,42 +331,6 @@ local options = {
 					get = function() return MonkEC.db.profile.elusiveBrewThreshold end,
 					set = "SetElusiveBrewThreshold",
 				},									
-				prot_priority = {
-					type = "group",
-					name = "Priorities",
-					desc = "Priority of abilities in main frame",
-					order = 600,
-					args = {
-						header = {
-							type = "header",
-							name = "Ability Priorities",
-							order = 611,
-						},										
-						prot_enable = {
-							type = "toggle",
-							name = "Enable ability queue",
-							width = "double",
-							order = 605,
-							get = function() return MonkEC.db.profile.enable_prot end,
-							set = function() 
-											MonkEC.db.profile.enable_prot = not MonkEC.db.profile.enable_prot
-											MonkEC:UpdateFrameVisibility()
-										end,
-						},
-						time_in_combat = {
-							type = "range",
-							name = "Combat Time Before Debuffs",
-							desc = "Minimum time spent in combat before recommending missing debuffs. (Rend, Demo Shout, Thunderclap)",
-							order = 608,
-							min = 0,
-							max = 30,
-							step = 1,
-							width = "double",
-							get = function() return MonkEC.db.profile.time_in_combat end,
-							set = function(self,key) MonkEC.db.profile.time_in_combat = key end,
-						},
-					},
-				},				
 			},
 		},
 		buffs = {
@@ -415,9 +347,10 @@ local options = {
 					type = "toggle",
 					name = "Enable",
 					order = 212,
-					get = function() return MonkEC.db.profile.buff_isShownProt end,
-					set = function(self, key) MonkEC.db.profile.buff_isShownProt = key
-																		MonkEC:UpdateFrameVisibility() end,
+					get = function() return MonkEC.db.profile.buff_isShown end,
+					set = function(self, key) 
+									MonkEC.db.profile.buff_isShown = key
+									MonkEC:UpdateFrameVisibility() end,
 				},					
 				scale = {
 					type = "range",
@@ -446,11 +379,10 @@ local options = {
 					get = function() return MonkEC.db.profile.buff_y end,
 					set = "SetBuffYCoord",
 				},
-				protGroup = {
+				buffGroup = {
 					type = "group",
 					name = "Buffs/Debuffs",
 					args = {
-						-- prot
 						header = {
 							type = "header",
 							name = "Brewmaster Buffs/Debuffs",
@@ -568,7 +500,7 @@ function MonkEC:InspectSpecialization()
 		maximumChiGain = 2
 	end
 	
-	haveHealingElixirs = GetSpellBookItemInfo(MonkEC.talent.chiBurst.name) ~= nil
+	haveHealingElixirs = GetSpellBookItemInfo(MonkEC.talent.healingElixirs.name) ~= nil
 	
 	self:DetermineChiGeneration()
 	self:DetermineSpellCooldowns()
@@ -583,8 +515,20 @@ function MonkEC:InspectSpecialization()
 		self.common.touchOfDeath.cost = 3
 	end
 	if self.brewmaster.guard.cost ~= 2 then
-		self:Print("Guard cost is incorrect (" .. tostring(self.common.touchOfDeath.cost) .. " vs 2).  Working around it.")
+		self:Print("Guard cost is incorrect (" .. tostring(self.brewmaster.guard.cost) .. " vs 2).  Working around it.")
 		self.brewmaster.guard.cost = 2
+	end
+	if self.talent.chiBurst.cost ~= 2 then
+		self:Print("Chi Burst cost is incorrect (" .. tostring(self.talent.chiBurst.cost) .. " vs 2).  Working around it.")
+		self.talent.chiBurst.cost = 2
+	end
+	if self.talent.zenSphere.cost ~= 2 then
+		self:Print("Zen Sphere cost is incorrect (" .. tostring(self.talent.zenSphere.cost) .. " vs 2).  Working around it.")
+		self.talent.zenSphere.cost = 2
+	end
+	if self.talent.chiWave.cost ~= 2 then
+		self:Print("Chi Wave cost is incorrect (" .. tostring(self.talent.chiWave.cost) .. " vs 2).  Working around it.")
+		self.talent.chiWave.cost = 2
 	end
 end
 
@@ -618,7 +562,6 @@ function MonkEC:DetermineSpellCooldowns()
 	self.brewmaster.leerOfTheOx.cooldownLength = 20
 	self.brewmaster.provoke.cooldownLength = 8
 	self.brewmaster.summonBlackOxStatue.cooldownLength = 180
-	self.windwalker.risingSunKick.cooldownLength = 8
 end
 
 function MonkEC:CreatePriorityLists()
@@ -632,10 +575,10 @@ function MonkEC:CreatePriorityLists()
 					self:StaggerTooHigh(characterState)
 			end, 
 		},
-		{	spell = self.talent.chiBurst, condition = nil, },
-		{	spell = self.talent.chiWave, condition = nil, },
-		{	spell = self.talent.zenSphere, condition = nil, },
+		{	spell = self:Level30Talent(), condition = nil, },
 		{	spell = self.common.expelHarm, condition = nil, },
+		{	spell = self.brewmaster.kegSmash, condition = nil, },
+		{	spell = self.common.jab, condition = nil, },
 	}
 	
 	brewmasterPriorities = {
@@ -723,11 +666,7 @@ function MonkEC:CreatePriorityLists()
 		},
 		{	spell = self.brewmaster.guard, 
 			condition = function(self, characterState) return (self.db.profile.suggest_guard == true) end, },
-		{	spell = self.talent.chiBurst, 
-			condition = function(self, characterState) return self:DamagedEnough(characterState) end, },
-		{	spell = self.talent.chiWave, 
-			condition = function(self, characterState) return self:DamagedEnough(characterState) end, },
-		{	spell = self.talent.zenSphere, 
+		{	spell = self:Level30Talent(), 
 			condition = function(self, characterState) return self:DamagedEnough(characterState) end, },
 		{	spell = self.brewmaster.breathOfFire, 
 			condition = function(self, characterState) 
@@ -751,6 +690,37 @@ function MonkEC:CreatePriorityLists()
 			end, 
 		},
 	}
+end
+
+function MonkEC:Level30Talent()
+	local spell = nil
+	
+	-- for i = 1,18 do
+		-- local name, texture, tier, column, selected, available = GetTalentInfo(i)
+		-- self:Print("GetTalentInfo " .. i .. " name " .. tostring(name) .. " selected=" .. tostring(selected))
+	-- end
+	
+	local name,_,_,_,selected,_ = GetTalentInfo(6)
+	if selected then
+		spell = MonkEC.talent.chiBurst
+	else
+		name,_,_,_,selected,_ = GetTalentInfo(4)
+		if selected then
+			spell = MonkEC.talent.chiWave
+		else
+			name,_,_,_,selected,_ = GetTalentInfo(5)
+			if selected then
+				spell = MonkEC.talent.zenSphere
+			end
+		end
+	end
+
+	if spell == nil then -- TODO bug workaround
+		spell = MonkEC.talent.zenSphere
+		self:Print("Can't figure out lvl30 spell.  Forcing to " .. spell.name)
+	end
+	
+	return spell
 end
 
 ----------------------------------
@@ -1308,10 +1278,12 @@ function MonkEC:UpdateFrameVisibility()
 	if showAbilityFrame then
 		if not self.frame:IsShown() then
 			self.frame:Show()
+			self.frame.aoeToggle.frame:Show()
 		end
 	else
 		if self.frame:IsShown() then
 			self.frame:Hide()
+			self.frame.aoeToggle.frame:Hide()
 		end
 	end
 				
