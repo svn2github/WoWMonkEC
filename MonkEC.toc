@@ -7,4 +7,9 @@
 ## OptionalDeps Age3, LibSharedMedia-3.0
 
 embeds.xml
+
 MonkEC.lua
+MonkEC_frames.lua
+MonkEC_options.lua
+MonkEC_spelldata.lua
+MonkEC_simulation.lua
