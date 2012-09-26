@@ -135,6 +135,92 @@ function MonkEC:CreatePriorityLists()
 			end, 
 		},
 	}
+		
+	windwalkerPriorities = {
+		{	spell = self.common.touchOfDeath, 
+			condition = function(self, characterState) 
+				return (self.db.profile.suggest_touchOfDeath == true) and
+						UnitExists("target") and 
+						(UnitHealth("player") >= UnitHealth("target")); 
+			end, 
+		},
+		{	spell = self.common.legacyOfTheEmperor, 
+			condition = function(self, characterState) 
+				return not self:PlayerHasBuff(self.common.legacyOfTheEmperor, characterState)
+			end, 
+		},
+		--{	spell = self.windwalker.stanceOfTheFierceTiger, 
+		--	condition = function(self, characterState) 
+		--		return self:StanceIsWrong(characterState); 
+		--	end, 
+		--},
+		{	spell = self.windwalker.spinningFireBlossom, 
+			condition = function(self, characterState) 
+				return UnitExists("target") and 
+						not characterState.inMeleeRange
+			end, 
+		},
+		{	spell = self.common.risingSunKick, 
+			condition = function(self, characterState) 
+				return UnitExists("target")
+			end, 
+		},
+		{	spell = self.common.expelHarm, 
+			condition = function(self, characterState) 
+				return UnitExists("target") and
+						self:EnergyHigh(characterState) and
+						self:DamagedEnough(characterState)
+			end, 
+		},
+		{	spell = self.common.jab, 
+			condition = function(self, characterState) 
+				return UnitExists("target") and
+						self:EnergyHigh(characterState) and
+						not self:ChiWillNotOverflow(self.common.jab, characterState)
+			end, 
+		},
+		{	spell = self.windwalker.tigerEyeBrew, 
+			condition = function(self, characterState) 
+				return UnitExists("target") and
+						self:BuffStackedTo(self.buff.tigerEye, 10, characterState)
+			end, 
+		},
+		{	spell = self.windwalker.fistsOfFury, 
+			condition = function(self, characterState) 
+				return UnitExists("target")
+			end, 
+		},
+		{	spell = self.windwalker.energizingBrew, 
+			condition = function(self, characterState) 
+				return UnitExists("target")
+			end, 
+		},
+		{	spell = self.common.blackoutKick, 
+			condition = function(self, characterState) 
+				return UnitExists("target")
+			end, 
+		},
+		{	spell = self.common.tigerPalm, 
+			condition = function(self, characterState) 
+				return UnitExists("target")
+			end, 
+		},
+		{	spell = self.common.expelHarm, 
+			condition = function(self, characterState) 
+				return UnitExists("target")
+			end, 
+		},
+		{	spell = self.common.jab, 
+			condition = function(self, characterState) 
+				return UnitExists("target")
+			end, 
+		},
+		{	spell = self.windwalker.flyingSerpentKick, 
+			condition = function(self, characterState) 
+				return UnitExists("target")
+			end, 
+		},
+	}
 end
 
 function MonkEC:FindNextSpell(currentGCD, characterState)
@@ -146,6 +232,8 @@ function MonkEC:FindNextSpell(currentGCD, characterState)
 		else
 			spell = self:FindNextSpellFrom(brewmasterPriorities, currentGCD, characterState)
 		end
+	else
+		spell = self:FindNextSpellFrom(windwalkerPriorities, currentGCD, characterState)
 	end
 
 	if spell ~= nil then
@@ -196,6 +284,8 @@ function MonkEC:UpdateBuffsForSpell(spell, characterState)
 		characterState.playerHasLegacyOfTheEmperor = true
 	elseif spell.id == self.brewmaster.stanceOfTheSturdyOx.id then
 		characterState.stance = MonkEC.brewmasterStance
+	elseif spell.id == self.windwalker.stanceOfTheFierceTiger.id then
+		characterState.stance = MonkEC.windwalkerStance
 	elseif spell.id == self.common.blackoutKick.id then
 		characterState.shuffleSecondsLeft = MonkEC.shuffleBuffLength
 	elseif spell.id == self.common.tigerPalm.id then
@@ -273,6 +363,19 @@ function MonkEC:BuffWearingOffSoon(spell, characterState)
 	return wearingOffSoon
 end
 
+function MonkEC:BuffStackedTo(spell, targetStackSize, characterState)
+	local stacked = false
+	
+	if spell.id == self.buff.tigerEye.id then
+--self:Print("Checking tiger eye stack size - " .. tostring(characterState.tigerEyeStacks) .. ">=" .. tostring(targetStackSize))
+		if characterState.tigerEyeCount >= targetStackSize then
+			stacked = true
+		end
+	end
+	
+	return wearingOffSoon
+end
+
 function MonkEC:DebuffWearingOffSoon(spell, characterState)
 	local wearingOffSoon = true
 	
@@ -324,6 +427,10 @@ function MonkEC:FindNextSpellFrom(priorities, currentGCD, characterState)
 end
 
 function MonkEC:CanPerformSpell(spell, currentGCD, characterState)
+--if spell.id == self.windwalker.fistsOfFury.id then
+--self:Print("self:HasEnoughResources(spell, characterState) = " .. tostring(self:HasEnoughResources(spell, characterState)))
+--self:Print("self:SpellWillBeOffCooldown(spell, currentGCD) = " .. tostring(self:SpellWillBeOffCooldown(spell, currentGCD)))
+--end
 	return self:IsHighEnoughLevel(spell, characterState) and 
 			self:HasEnoughResources(spell, characterState) and
 			self:SpellWillBeOffCooldown(spell, currentGCD) and 
@@ -347,14 +454,16 @@ function MonkEC:HasEnoughResources(spell, characterState)
 end
 
 function MonkEC:SpellWillBeOffCooldown(spell, currentGCD)
+--if spell.id == MonkEC.windwalker.fistsOfFury.id then
+--MonkEC:Print("spell.cooldown = " .. tostring(spell.cooldown))
+--end
 	return spell.cooldown <= currentGCD 
 end
 
 function MonkEC:StanceIsWrong(characterState)
-	local stanceIsWrong = true
-	
-	if MonkEC.talentSpec == MonkEC.talentSpecBrewmaster and characterState.stance == MonkEC.brewmasterStance then
-		stanceIsWrong = false
+	local stanceIsWrong = false
+	if MonkEC.talentSpec == MonkEC.talentSpecBrewmaster and characterState.stance ~= MonkEC.brewmasterStance then
+		stanceIsWrong = true
 	end
 
 	return stanceIsWrong

@@ -272,7 +272,7 @@ function MonkEC:UpdateFrameVisibility()
 end
 
 function MonkEC:TalentSpecIsSupported() 
-	return MonkEC.talentSpec == MonkEC.talentSpecBrewmaster
+	return MonkEC.talentSpec == MonkEC.talentSpecBrewmaster or  MonkEC.talentSpec == MonkEC.talentSpecWindwalker 
 end
 
 ---------------------------------
@@ -502,6 +502,7 @@ function MonkEC:UpdateAbilityQueue()
 	self:UpdateCooldowns(currentGCD, MonkEC.common)
 	self:UpdateCooldowns(currentGCD, MonkEC.talent)
 	self:UpdateCooldowns(currentGCD, MonkEC.brewmaster)
+	self:UpdateCooldowns(currentGCD, MonkEC.windwalker)
 	
 	local characterState = self:GatherCharacterState()
 

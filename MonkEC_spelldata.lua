@@ -30,6 +30,7 @@ local elusiveBrewCount, elusiveBrewSecondsLeft, elusiveBrewSpell
 local sanctuaryOfTheOxCount, sanctuaryOfTheOxSecondsLeft, sanctuaryOfTheOxSpell
 local shuffleCount, shuffleSecondsLeft, shuffleSpell
 local tigerPowerCount, tigerPowerSecondsLeft, tigerPowerSpell
+local tigerEyeCount, tigerEyeSecondsLeft, tigerEyeSpell
 local weakenedBlowsCount,weakenedBlowsSecondsLeft,weakenedBlowsSpell
 
 function MonkEC:GetSpellData(id) 
@@ -100,12 +101,25 @@ MonkEC.brewmaster = {
 	summonBlackOxStatue = MonkEC:GetSpellData(115315),
 }
 
+MonkEC.windwalker = {
+	energizingBrew = MonkEC:GetSpellData(115288),
+	fistsOfFury = MonkEC:GetSpellData(117418),
+	flyingSerpentKick = MonkEC:GetSpellData(101545),
+	legacyOfTheWhiteTiger = MonkEC:GetSpellData(116781),
+	risingSunKick = MonkEC:GetSpellData(107428),
+	spinningFireBlossom = MonkEC:GetSpellData(115073),
+	stanceOfTheFierceTiger = MonkEC:GetSpellData(103985),
+	tigerEyeBrew = MonkEC:GetSpellData(116740),
+}
+
 -- Spell Details for Buffs
 MonkEC.buff = {
-	shuffle	= MonkEC:GetSpellData(115307),
+	legacyOfTheWhiteTiger = MonkEC:GetSpellData(116781),
 	powerGuard = MonkEC:GetSpellData(118636),
 	sanctuaryOfTheOx = MonkEC:GetSpellData(126119),
+	shuffle	= MonkEC:GetSpellData(115307),
 	tigerPower = MonkEC:GetSpellData(125359),
+	tigerEye = MonkEC:GetSpellData(125195),
 }
 
  -- Spell details for Debuffs
@@ -148,9 +162,11 @@ function MonkEC:InspectSpecialization()
 		self:Print("Touch of Death cost is incorrect (" .. tostring(self.common.touchOfDeath.cost) .. " vs 3).  Working around it.")
 		self.common.touchOfDeath.cost = 3
 	end
-	if self.brewmaster.guard.cost ~= 2 then
-		self:Print("Guard cost is incorrect (" .. tostring(self.brewmaster.guard.cost) .. " vs 2).  Working around it.")
-		self.brewmaster.guard.cost = 2
+	if MonkEC.talentSpec == MonkEC.talentSpecBrewmaster then
+		if self.brewmaster.guard.cost ~= 2 then
+			self:Print("Guard cost is incorrect (" .. tostring(self.brewmaster.guard.cost) .. " vs 2).  Working around it.")
+			self.brewmaster.guard.cost = 2
+		end
 	end
 	if self.talent.chiBurst.cost ~= 2 then
 		self:Print("Chi Burst cost is incorrect (" .. tostring(self.talent.chiBurst.cost) .. " vs 2).  Working around it.")
@@ -163,6 +179,22 @@ function MonkEC:InspectSpecialization()
 	if self.talent.chiWave.cost ~= 2 then
 		self:Print("Chi Wave cost is incorrect (" .. tostring(self.talent.chiWave.cost) .. " vs 2).  Working around it.")
 		self.talent.chiWave.cost = 2
+	end
+	if MonkEC.talentSpec == MonkEC.talentSpecWindwalker then
+		if self.windwalker.spinningFireBlossom.cost ~= 1 then
+			self:Print("Spinning Fire Blossom cost is incorrect (" .. tostring(self.windwalker.spinningFireBlossom.cost) .. " vs 1).  Working around it.")
+			self.windwalker.spinningFireBlossom.cost = 1
+		end
+		if self.windwalker.fistsOfFury.cost ~= 3 then
+			self:Print("Fists of Fury cost is incorrect (" .. tostring(self.windwalker.fistsOfFury.cost) .. " vs 3).  Working around it.")
+			self.windwalker.fistsOfFury.cost = 3
+			self.windwalker.fistsOfFury.powerType = MonkEC.chiPowerType
+			self.windwalker.fistsOfFury.cooldown = 25
+		end
+		if self.windwalker.risingSunKick.cost ~= 2 then
+			self:Print("Rising Sun cost is incorrect (" .. tostring(self.windwalker.risingSunKick.cost) .. " vs 2).  Working around it.")
+			self.windwalker.risingSunKick.cost = 2
+		end
 	end
 end
 
@@ -208,6 +240,10 @@ function MonkEC:SetSpellCooldowns()
 	self.brewmaster.leerOfTheOx.cooldownLength = 20
 	self.brewmaster.provoke.cooldownLength = 8
 	self.brewmaster.summonBlackOxStatue.cooldownLength = 180
+	self.windwalker.energizingBrew.cooldownLength = 60
+	self.windwalker.fistsOfFury.cooldownLength = 25
+	self.windwalker.flyingSerpentKick.cooldownLength = 25
+	self.windwalker.risingSunKick.cooldownLength = 8
 end
 
 function MonkEC:Level30Talent()
@@ -253,6 +289,8 @@ function MonkEC:GetBuffInfo(num)
 		return tigerPowerSpell,tigerPowerSecondsLeft,tigerPowerCount
 	elseif num == 5 then
 		return sanctuaryOfTheOxSpell,sanctuaryOfTheOxTime,sanctuaryOfTheOxCount
+	elseif num == 6 then
+		return tigerEyeSpell,tigerEyeTime,tigerEyeCount
 	else
 		return mortalWoundsIcon,mortalWoundsSecondsLeft,mortalWoundsCount
 	end
@@ -324,6 +362,14 @@ function MonkEC:UpdateTrackedBuffs()
 		tigerPowerSecondsLeft = 0
 	end
 	
+	tigerEyeSpell = MonkEC.windwalker.tigerEye
+	_,_,_,tigerEyeCount,_,_,tigerEyeExpirationTime,_,_ = UnitAura("player", MonkEC.buff.tigerEye.name)
+	if tigerEyeExpirationTime ~= nil then
+		tigerEyeSecondsLeft = tigerEyeExpirationTime - GetTime()
+	else
+		tigerEyeSecondsLeft = 0
+	end
+	
 	sanctuaryOfTheOxSpell = MonkEC.brewmaster.summonBlackOxStatue
 	_,_,_,sanctuaryOfTheOxCount,_,_,sanctuaryOfTheOxExpirationTime,_,_ = UnitAura("player", MonkEC.buff.sanctuaryOfTheOx.name)
 	if sanctuaryOfTheOxExpirationTime ~= nil then
@@ -354,16 +400,18 @@ function MonkEC:GatherCharacterState()
 		
 		playerHasLegacyOfTheEmperor = UnitBuff("player", self.common.legacyOfTheEmperor.name) ~= nil,
 		playerHasSanctuaryOfTheOx = UnitBuff("player", self.buff.sanctuaryOfTheOx.name) ~= nil,
+		playerHasLegacyOfTheWhiteTiger = UnitBuff("player", self.windwalker.legacyOfTheWhiteTiger.name) ~= nil,
 		
 		shuffleSecondsLeft = shuffleSecondsLeft,
 		staggerTooHigh = (UnitDebuff("player", self.debuff.moderateStagger.name) ~= nil) or 
 						(UnitDebuff("player", self.debuff.heavyStagger.name) ~= nil),
 		weakenedBlowsSecondsLeft = weakenedBlowsSecondsLeft,
+		elusiveBrewCount = elusiveBrewCount,
+		tigerEyeCount = tigerEyeCount,
 		tigerPowerCount = tigerPowerCount,
 		tigerPowerSecondsLeft = tigerPowerSecondsLeft,
-		elusiveBrewCount = elusiveBrewCount,
 	}
-		
+
 	if state.doAOE == nil then
 		state.doAOE = false
 	end
@@ -374,6 +422,10 @@ function MonkEC:GatherCharacterState()
 	
 	if state.elusiveBrewCount == nil then
 		state.elusiveBrewCount = 0
+	end
+	
+	if state.tigerEyeCount == nil then
+		state.tigerEyeCount = 0
 	end
 	
 	if state.tigerPowerCount == nil then
