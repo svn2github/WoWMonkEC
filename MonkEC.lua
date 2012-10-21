@@ -23,6 +23,7 @@ function MonkEC:OnInitialize()
 	MonkEC:RegisterEvent("PLAYER_TALENT_UPDATE")	
 	MonkEC:RegisterEvent("PLAYER_REGEN_ENABLED")
 	MonkEC:RegisterEvent("PLAYER_REGEN_DISABLED")
+	MonkEC:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 	
 	MonkEC:RegisterChatCommand("monkec", "ChatCommand")
 	MonkEC:Print("MonkEC loaded. Please type /monkec config for the configuration GUI")
@@ -41,10 +42,19 @@ end
 
 function MonkEC:PLAYER_REGEN_ENABLED()
 	self:UpdateFrameVisibility()
+	MonkEC:ClearTrackedTargets()
 end
 
 function MonkEC:PLAYER_REGEN_DISABLED()
 	self:UpdateFrameVisibility()
+end
+
+function MonkEC:COMBAT_LOG_EVENT_UNFILTERED(_, timestamp, eventtype, _, srcGUID, _, _, _, destGUID, _, _, _, spellId)
+	if srcGUID == UnitGUID("player") then
+		if eventtype == "SPELL_DAMAGE" or eventtype == "SPELL_MISSED" or eventtype == "SPELL_PERIODIC_DAMAGE" then
+			MonkEC:TrackTarget(destGUID)
+		end
+	end
 end
 
 -------------------------------

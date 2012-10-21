@@ -9,6 +9,10 @@ local dumpChiThreshold	= 3
 local desperationPriorities
 local brewmasterPriorities
 
+-- Target tracking
+local numTargets = 0
+local trackedTargets = {}
+
 function MonkEC:CreatePriorityLists()
 	desperationPriorities = {
 		{	spell = self.brewmaster.guard, condition = nil, },
@@ -63,16 +67,16 @@ function MonkEC:CreatePriorityLists()
 						not characterState.inMeleeRange
 			end, 
 		},
-		{	spell = self.brewmaster.kegSmash, 
-			condition = function(self, characterState) 
-				return UnitExists("target") and
-						self:DebuffWearingOffSoon(self.debuff.weakenedBlows, characterState)
-			end, 
-		},
 		{	spell = self.common.blackoutKick, 
 			condition = function(self, characterState) 
 				return UnitExists("target") and
 						self:BuffWearingOffSoon(self.buff.shuffle, characterState)
+			end, 
+		},
+		{	spell = self.brewmaster.kegSmash, 
+			condition = function(self, characterState) 
+				return UnitExists("target") and
+						self:DebuffWearingOffSoon(self.debuff.weakenedBlows, characterState)
 			end, 
 		},
 		{	spell = self.common.expelHarm, 
@@ -98,6 +102,12 @@ function MonkEC:CreatePriorityLists()
 						self:NeedsMoreTigerPower(characterState)
 			end, 
 		},
+		{	spell = self.brewmaster.breathOfFire, 
+			condition = function(self, characterState) 
+				return UnitExists("target") and
+						self:DoAOE(characterState) 
+			end, 
+		},
 		{	spell = self.common.spinningCraneKick, 
 			condition = function(self, characterState) 
 				return self:DoAOE(characterState)
@@ -113,12 +123,6 @@ function MonkEC:CreatePriorityLists()
 			condition = function(self, characterState) return (self.db.profile.suggest_guard == true) end, },
 		{	spell = self:Level30Talent(), 
 			condition = function(self, characterState) return self:DamagedEnough(characterState) end, },
-		{	spell = self.brewmaster.breathOfFire, 
-			condition = function(self, characterState) 
-				return UnitExists("target") and
-						self:DoAOE(characterState) 
-			end, 
-		},
 		{	spell = self.common.blackoutKick, 
 			condition = function(self, characterState) 
 				return UnitExists("target") and self:DumpChi(characterState)
@@ -335,16 +339,14 @@ function MonkEC:DoElusiveBrew(characterState)
 end
 
 function MonkEC:DoAOE(characterState)
-	return characterState.doAOE
+	return numTargets > 2 -- We're always damaging ourself with stagger
 end
 
 function MonkEC:ChiWillNotOverflow(spell, characterState)
 	local willNotOverflow = true
---MonkEC:Print("ChiWillNotOverflow checking: " .. spell.name)
 
 	if spell.chiGenerated ~= nil then
 		willNotOverflow = (characterState.chi + spell.chiGenerated) <= MonkEC.maxChi
-		--MonkEC:Print("ChiWillNotOverflow: " .. tostring(willNotOverflow) .. " = (" .. characterState.chi .. " + " .. spell.chiGenerated .. ") <= " .. MonkEC.maxChi)
 	end
 	
 	return willNotOverflow
@@ -354,7 +356,6 @@ function MonkEC:BuffWearingOffSoon(spell, characterState)
 	local wearingOffSoon = true
 	
 	if spell.id == self.buff.shuffle.id then
---self:Print("Checking shuffle characterState.shuffleSecondsLeft > theGCD - " .. characterState.shuffleSecondsLeft .. ">" .. theGCD .. "=" .. tostring(characterState.shuffleSecondsLeft > theGCD))
 		if characterState.shuffleSecondsLeft > MonkEC.theGCD or characterState.level < 72 then
 			wearingOffSoon = false
 		end
@@ -407,30 +408,12 @@ function MonkEC:FindNextSpellFrom(priorities, currentGCD, characterState)
 			self:CanPerformSpell(candidate.spell, currentGCD, characterState) then
 			return candidate.spell
 		end
-		-- if candidate.spell ~= nil then
-			-- local candidateAccepted = true
-			-- if candidate.condition ~= nil then
-				-- candidateAccepted = candidate.condition(self, characterState)
-			-- end
-			
-			-- if candidateAccepted then
-				-- candidateAccepted = self:CanPerformSpell(candidate.spell, currentGCD, characterState)
-			-- end
-			
-			-- if candidateAccepted then
-				-- return candidate.spell
-			-- end
-		-- end
 	end
 	
 	return nil
 end
 
 function MonkEC:CanPerformSpell(spell, currentGCD, characterState)
---if spell.id == self.windwalker.fistsOfFury.id then
---self:Print("self:HasEnoughResources(spell, characterState) = " .. tostring(self:HasEnoughResources(spell, characterState)))
---self:Print("self:SpellWillBeOffCooldown(spell, currentGCD) = " .. tostring(self:SpellWillBeOffCooldown(spell, currentGCD)))
---end
 	return self:IsHighEnoughLevel(spell, characterState) and 
 			self:HasEnoughResources(spell, characterState) and
 			self:SpellWillBeOffCooldown(spell, currentGCD) and 
@@ -454,9 +437,6 @@ function MonkEC:HasEnoughResources(spell, characterState)
 end
 
 function MonkEC:SpellWillBeOffCooldown(spell, currentGCD)
---if spell.id == MonkEC.windwalker.fistsOfFury.id then
---MonkEC:Print("spell.cooldown = " .. tostring(spell.cooldown))
---end
 	return spell.cooldown <= currentGCD 
 end
 
@@ -481,4 +461,26 @@ function MonkEC:PlayerHasBuff(spell, characterState)
 	end
 	
 	return hasBuff
+end
+
+function MonkEC:TrackTarget(GUID)
+	if trackedTargets[GUID] == nil then
+		numTargets = numTargets + 1
+	end
+	trackedTargets[GUID] = GetTime()
+end
+
+function MonkEC:ClearOldTargets()
+	local staleTime = GetTime() - 3
+	for targetId,lastSeen in pairs(trackedTargets) do
+		if lastSeen < staleTime then
+			trackedTargets[targetId] = nil
+			numTargets = numTargets - 1
+		end
+	end
+end
+
+function MonkEC:ClearTrackedTargets()
+	wipe(trackedTargets)
+	numTargets = 0
 end
