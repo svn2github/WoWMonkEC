@@ -61,9 +61,5 @@ end
 -- Interpret the Chat Commnads
 -------------------------------
 function MonkEC:ChatCommand(input)
-	if input:trim() == "options" or input:trim() == "config" then
-		LibStub("AceConfigDialog-3.0"):Open("MonkEC", self.optionFrame)
-	else
-		self:Print("MonkEC: Enter \"/MonkEC config\" for configuration GUI")
-	end
+	LibStub("AceConfigDialog-3.0"):Open("MonkEC", self.optionFrame)
 end

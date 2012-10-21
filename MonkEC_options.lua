@@ -31,7 +31,7 @@ function MonkEC:InitializeOptions()
 			elusiveBrewThreshold = 4,
 			dangerousHealth = 20,
 			targetChi = 2,
-			targetEnergy = 50,
+			targetEnergy = 75,
 			
 			tracked_buffs_1 = 1,
 			tracked_buffs_2 = 2,
