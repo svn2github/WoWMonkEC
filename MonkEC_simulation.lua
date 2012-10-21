@@ -484,3 +484,11 @@ function MonkEC:ClearTrackedTargets()
 	wipe(trackedTargets)
 	numTargets = 0
 end
+
+function MonkEC:SetChiGoal(info, value)
+	self.db.profile.targetChi = value
+end
+
+function MonkEC:SetEnergyGoal(info, value)
+	self.db.profile.targetEnergy = value
+end

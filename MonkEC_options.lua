@@ -154,7 +154,7 @@ function MonkEC:InitializeOptions()
 						name = "Target Chi",
 						order = 210,
 						min = 0,
-						max = maxChi,
+						max = MonkEC.maxChi,
 						step = 1,
 						desc = "Sets the amount of chi that MonkEC will try to maintain",		
 						get = function() return MonkEC.db.profile.targetChi end,
