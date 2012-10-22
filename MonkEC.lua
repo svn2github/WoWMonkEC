@@ -26,7 +26,7 @@ function MonkEC:OnInitialize()
 	MonkEC:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 	
 	MonkEC:RegisterChatCommand("monkec", "ChatCommand")
-	MonkEC:Print("MonkEC loaded. Please type /monkec config for the configuration GUI")
+	MonkEC:Print(STARTUPMESSAGE)
 end
  
 function MonkEC:OnEnable()

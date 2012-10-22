@@ -281,7 +281,7 @@ end
 ---------------------------------							 
 function MonkEC:SetScale(info, scale)
 	if (tonumber(scale) > 1.5 or tonumber(scale) < 0.5) then
-		self:Print("Scale value out of range (0.5-1.5)")
+		self:Print(BADSCALEVALUE .. " (0.5-1.5)")
 	else
 		self.db.profile.frame_scale = scale
 		self:ScaleFrame()
@@ -308,7 +308,7 @@ end
 
 function MonkEC:SetBuffScale(info, value)
 	if (tonumber(value) > 1.5 or tonumber(value) < 0.5) then
-		self:Print("Scale value out of range (0.5-1.5)")
+		self:Print(BADSCALEVALUE .. " (0.5-1.5)")
 	else
 		self.db.profile.buff_scale = value
 		self:ScaleBuffFrame()

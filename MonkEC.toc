@@ -10,6 +10,7 @@ embeds.xml
 
 MonkEC.lua
 MonkEC_frames.lua
+MonkEC_localization.lua
 MonkEC_options.lua
 MonkEC_spelldata.lua
 MonkEC_simulation.lua
