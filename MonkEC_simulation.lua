@@ -492,3 +492,12 @@ end
 function MonkEC:SetEnergyGoal(info, value)
 	self.db.profile.targetEnergy = value
 end
+
+function MonkEC:SetDangerousHealth(info, value)
+	self.db.profile.dangerousHealth = value
+end
+
+function MonkEC:SetElusiveBrewThreshold(info, value)
+	self.db.profile.elusiveBrewThreshold = value
+end
+
