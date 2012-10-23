@@ -13,6 +13,7 @@ local buffIconYOffset = 8
 
 local timeSinceLastUpdate = 0
 local updateFrequency = 0.1
+local inCombat = false
 
 ----------------------------------
 -- Override the OnUpdate function
@@ -241,10 +242,8 @@ function MonkEC:UpdateFrameVisibility()
 	else
 		if MonkEC:TalentSpecIsSupported() then
 			if not self.db.profile.showOnlyIC or inCombat then
-				if self.db.profile.enabled then
-					showAbilityFrame = true
-					showBuffFrame = self.db.profile.buff_isShown
-				end
+				showAbilityFrame = self.db.profile.enabled
+				showBuffFrame = self.db.profile.buff_isShown
 			end
 		end
 	end
@@ -336,9 +335,9 @@ function MonkEC:ScaleBuffFrame()
 	buffFrame:SetWidth(self.db.profile.buff_width * buffScale)
 	buffFrame:SetHeight(self.db.profile.buff_height * buffScale) 
 	
-	self:ScaleBuff(buffFrame.buff1, buffFrame, buffIconXOffset[4], buffIconYOffset, buffSize, buffScale)
-	self:ScaleBuff(buffFrame.buff2, buffFrame, buffIconXOffset[4], buffIconYOffset, buffSize, buffScale)
-	self:ScaleBuff(buffFrame.buff3, buffFrame, buffIconXOffset[4], buffIconYOffset, buffSize, buffScale)
+	self:ScaleBuff(buffFrame.buff1, buffFrame, buffIconXOffset[1], buffIconYOffset, buffSize, buffScale)
+	self:ScaleBuff(buffFrame.buff2, buffFrame, buffIconXOffset[2], buffIconYOffset, buffSize, buffScale)
+	self:ScaleBuff(buffFrame.buff3, buffFrame, buffIconXOffset[3], buffIconYOffset, buffSize, buffScale)
 	self:ScaleBuff(buffFrame.buff4, buffFrame, buffIconXOffset[4], buffIconYOffset, buffSize, buffScale)
 end
 
@@ -512,4 +511,12 @@ function MonkEC:UpdateAbilityQueue()
 		self.frame.abilityFrame[i].spell = spell
 		currentGCD = currentGCD + MonkEC.theGCD
 	end
+end
+
+function MonkEC:EnteredCombat()
+	inCombat = true
+end
+
+function MonkEC:ExitedCombat()
+	inCombat = false
 end

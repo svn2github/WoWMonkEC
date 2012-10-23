@@ -41,11 +41,13 @@ function MonkEC:PLAYER_TALENT_UPDATE()
 end
 
 function MonkEC:PLAYER_REGEN_ENABLED()
+	self:ExitedCombat()
 	self:UpdateFrameVisibility()
 	MonkEC:ClearTrackedTargets()
 end
 
 function MonkEC:PLAYER_REGEN_DISABLED()
+	self:EnteredCombat()
 	self:UpdateFrameVisibility()
 end
 

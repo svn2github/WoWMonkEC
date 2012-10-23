@@ -4,13 +4,7 @@ if trueclass ~= "MONK" then return end
 MonkEC.trackableBuffs = {}
 
 function MonkEC:InitializeOptions()
-	MonkEC.trackableBuffs = {
-		MonkEC.debuff.weakenedBlows.name, 
-		MonkEC.buff.shuffle.name, 
-		MonkEC.brewmaster.elusiveBrew.name, 
-		MonkEC.buff.tigerPower.name, 
-		MonkEC.buff.sanctuaryOfTheOx.name 
-	}
+	MonkEC.trackableBuffs = { WEAKENEDBLOWS, SHUFFLE, ELUSIVEBREW, TIGERPOWER, SANCTUARYOFTHEOX }
 	
 	local defaults = {
 		profile = {
@@ -129,7 +123,7 @@ function MonkEC:InitializeOptions()
 					},
 					suggestTouchOfDeath = {
 						type = "toggle",
-						name = "Touch of Death",
+						name = TOUCHOFDEATH,
 						desc = TOUCHOFDEATHCHECKBOXDESCRIPTION,
 						order = 140,
 						get = function() return MonkEC.db.profile.suggest_touchOfDeath end,
@@ -137,7 +131,7 @@ function MonkEC:InitializeOptions()
 					},
 					suggestBlackOx = {
 						type = "toggle",
-						name = "Black Ox Statue",
+						name = BLACKOXSTATUE,
 						desc = SUMMONSTATUECHECKBOXDESCRIPTION,
 						order = 150,
 						get = function() return MonkEC.db.profile.suggest_summonBlackOxStatue end,
@@ -145,7 +139,7 @@ function MonkEC:InitializeOptions()
 					},
 					suggestGuard = {
 						type = "toggle",
-						name = "Guard",
+						name = GUARD,
 						desc = GUARDCHECKBOXDESCRIPTION,
 						order = 160,
 						get = function() return MonkEC.db.profile.suggest_guard end,
@@ -250,7 +244,7 @@ function MonkEC:InitializeOptions()
 					},
 					buffGroup = {
 						type = "group",
-						name = "Buffs/Debuffs",
+						name = BUFFSDEBUFFS,
 						args = {
 							tracked_buff1 = {
 								type = "select",
