@@ -1,10 +1,17 @@
 local _, trueclass = UnitClass("player")
 if trueclass ~= "MONK" then return end
  
-MonkEC.trackableBuffs = {	"Weakened Blows", "Shuffle", "Elusive Brew", "Tiger Power", 
-							"Sanctuary of the Ox", "Mortal Wounds", "--------------" }
+MonkEC.trackableBuffs = {}
 
 function MonkEC:InitializeOptions()
+	MonkEC.trackableBuffs = {
+		MonkEC.debuff.weakenedBlows.name, 
+		MonkEC.buff.shuffle.name, 
+		MonkEC.brewmaster.elusiveBrew.name, 
+		MonkEC.buff.tigerPower.name, 
+		MonkEC.buff.sanctuaryOfTheOx.name 
+	}
+	
 	local defaults = {
 		profile = {
 			enabled = true,
@@ -245,11 +252,6 @@ function MonkEC:InitializeOptions()
 						type = "group",
 						name = "Buffs/Debuffs",
 						args = {
-							header = {
-								type = "header",
-								name = "Brewmaster Buffs/Debuffs",
-								order = 254,
-							},
 							tracked_buff1 = {
 								type = "select",
 								name = "Buff #1",
