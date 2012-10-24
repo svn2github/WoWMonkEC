@@ -105,7 +105,8 @@ function MonkEC:CreatePriorityLists()
 		{	spell = self.brewmaster.breathOfFire, 
 			condition = function(self, characterState) 
 				return UnitExists("target") and
-						self:DoAOE(characterState) 
+						self:DoAOE(characterState) and
+						self:DebuffWearingOffSoon(self.brewmaster.breathOfFire, characterState)
 			end, 
 		},
 		{	spell = self.common.spinningCraneKick, 
@@ -257,6 +258,7 @@ end
 
 function MonkEC:NextGCD(characterState)
 	characterState.energy = characterState.energy + MonkEC.energyGeneratedPerGCD_brewmaster
+	characterState.breathOfFireSecondsLeft = characterState.breathOfFireSecondsLeft - MonkEC.theGCD
 	characterState.shuffleSecondsLeft = characterState.shuffleSecondsLeft - MonkEC.theGCD
 	characterState.tigerPowerSecondsLeft = characterState.tigerPowerSecondsLeft - MonkEC.theGCD
 	characterState.weakenedBlowsSecondsLeft = characterState.weakenedBlowsSecondsLeft - MonkEC.theGCD
@@ -292,6 +294,8 @@ function MonkEC:UpdateBuffsForSpell(spell, characterState)
 		characterState.stance = MonkEC.windwalkerStance
 	elseif spell.id == self.common.blackoutKick.id then
 		characterState.shuffleSecondsLeft = MonkEC.shuffleBuffLength
+	elseif spell.id == self.brewmaster.breathOfFire.id then
+		characterState.breathOfFireSecondsLeft = MonkEC.breathOfFireDebuffLength
 	elseif spell.id == self.common.tigerPalm.id then
 		if characterState.tigerPowerCount < MonkEC.tigerPowerMaxStack then
 			characterState.tigerPowerCount = characterState.tigerPowerCount + 1
@@ -384,6 +388,10 @@ function MonkEC:DebuffWearingOffSoon(spell, characterState)
 		if characterState.weakenedBlowsSecondsLeft > MonkEC.theGCD then
 			wearingOffSoon = false
 		end
+	elseif spell.id == self.brewmaster.breathOfFire.id then
+		if characterState.breathOfFireSecondsLeft > MonkEC.theGCD then
+			wearingOffSoon = false
+		end
 	end
 	
 	return wearingOffSoon
@@ -426,7 +434,6 @@ end
 
 function MonkEC:HasEnoughResources(spell, characterState)
 	local haveEnoughResources = true
-	
 	if spell.powerType == MonkEC.energyPowerType then
 		haveEnoughResources = characterState.energy >= spell.cost
 	elseif spell.powerType == MonkEC.chiPowerType then
@@ -462,7 +469,7 @@ function MonkEC:PlayerHasBuff(spell, characterState)
 	
 	return hasBuff
 end
-
+	
 function MonkEC:TrackTarget(GUID)
 	if trackedTargets[GUID] == nil then
 		numTargets = numTargets + 1

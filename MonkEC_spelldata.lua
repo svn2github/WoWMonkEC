@@ -33,6 +33,12 @@ local tigerPowerCount, tigerPowerSecondsLeft, tigerPowerSpell
 local tigerEyeCount, tigerEyeSecondsLeft, tigerEyeSpell
 local weakenedBlowsCount,weakenedBlowsSecondsLeft,weakenedBlowsSpell
 
+-- Debuff lengths
+MonkEC.breathOfFireDebuffLength = 8
+
+-- Debuff info
+local breathOfFireCount, breathOfFireSecondsLeft, breathOfFireSpell
+
 function MonkEC:GetSpellData(id) 
 	local name, _, icon, cost, _, powerType = GetSpellInfo(id); 
 
@@ -305,6 +311,7 @@ function MonkEC:UpdateTrackedBuffs()
 	local shuffleExpirationTime = nil
 	local tigerPowerExpirationTime = nil
 	local weakenedBlowsExpirationTime = nil
+	local breathOfFireExpirationTime = nil
 
 	_,_,_,weakenedBlowsExpirationCount,_,_,weakenedBlowsExpirationTime,_,_ = UnitDebuff("target", MonkEC.external.earthShock.name)
 	if (weakenedBlowsExpirationTime ~= nil) then
@@ -385,6 +392,13 @@ function MonkEC:UpdateTrackedBuffs()
 	else
 		mortalWoundsSecondsLeft = 0
 	end
+	
+	_,_,_,_,_,_,breathOfFireExpirationTime,_,_ = UnitDebuff("target", MonkEC.brewmaster.breathOfFire.name)
+	if breathOfFireExpirationTime ~= nil then
+		breathOfFireSecondsLeft = breathOfFireExpirationTime - GetTime()
+	else
+		breathOfFireSecondsLeft = 0
+	end
 end
 
 function MonkEC:GatherCharacterState()
@@ -410,6 +424,7 @@ function MonkEC:GatherCharacterState()
 		tigerEyeCount = tigerEyeCount,
 		tigerPowerCount = tigerPowerCount,
 		tigerPowerSecondsLeft = tigerPowerSecondsLeft,
+		breathOfFireSecondsLeft = breathOfFireSecondsLeft,
 	}
 
 	if state.doAOE == nil then
@@ -438,6 +453,10 @@ function MonkEC:GatherCharacterState()
 	
 	if state.weakenedBlowsSecondsLeft == nil then
 		state.weakenedBlowsSecondsLeft = 0
+	end
+	
+	if state.breathOfFireSecondsLeft == nil then
+		state.breathOfFireSecondsLeft = 0
 	end
 	
 	return state
