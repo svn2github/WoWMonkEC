@@ -343,7 +343,7 @@ function MonkEC:DoElusiveBrew(characterState)
 end
 
 function MonkEC:DoAOE(characterState)
-	return numTargets > 2 -- We're always damaging ourself with stagger
+	return numTargets > 3 -- We're always damaging ourself with stagger
 end
 
 function MonkEC:ChiWillNotOverflow(spell, characterState)

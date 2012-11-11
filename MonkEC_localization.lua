@@ -184,10 +184,88 @@ end
 if (GetLocale() == "frFR") then
 
 -- Needs review
+ABILITYQUEUEFRAME = "Cadre de la file de comp\195\169tences"
+
+-- Needs review
+BADCOMMAND = "MonkEC: Taper \\\"/monkec config\\\" pour entrer dans le panneau de configuration"
+
+-- Missing translation
+-- BADSCALEVALUE = ""
+
+-- Needs review
+BLACKOXSTATUE = "Statue du Buffle noir"
+
+-- Needs review
+BUFFSDEBUFFS = "Am\195\169liorations/Affaiblissements"
+
+-- Needs review
+BUFFSDEBUFFSFRAMEHEADER = "Cadre des Am\195\169liorations / Affaiblissements"
+
+-- Needs review
+BUFFSSCALINGDESCRIPTION = "Configurer la taille du cadre des Am\195\169liorations / Affaiblissements"
+
+-- Needs review
+BUFFSXCOORDINATEDESCRIPTION = "Configurer l'abscisse du cadre des Am\195\169liorations / Affaiblissements"
+
+-- Needs review
+BUFFSYCOORDINATEDESCRIPTION = "Configurer l'ordonn\195\169e du cadre des Am\195\169liorations / Affaiblissements"
+
+-- Needs review
+CONFIG = "configuration"
+
+-- Needs review
+ELUSIVEBREW = "Infusion insaisissable"
+
+-- Needs review
+ELUSIVEBREWTHRESHOLD = "Seuil pour Infusion insaisissable"
+
+-- Needs review
+ELUSIVEBREWTHRESHOLDDESCRIPTION = "Configurer le nombre de charge d'Infusion insaisissable pour lequel MonkEC doit sugg\195\169rer l'utilisation"
+
+-- Needs review
+ENABLE = "Activer"
+
+-- Needs review
+ENABLEABILITYQUEUE = "Activer la file de comp\195\169tences"
+
+-- Needs review
+ENERGYTARGET = "Energie cible"
+
+-- Needs review
+ENERGYTARGETDESCRIPTION = "Configurer la quantit\195\169 d'\195\169nergie que MonkEC doit maintenir"
+
+-- Needs review
+GUARD = "Garde"
+
+-- Needs review
+GUARDCHECKBOXDESCRIPTION = "Sugg\195\168re l'utilisation de Garde"
+
+-- Needs review
+HEALTHPANICTHRESHOLD = "Seuil de Vie Critique"
+
+-- Needs review
+HEALTHPANICTHRESHOLDDESCRIPTION = "Configurer le pourcentage de vie pour lequel MonkEC doit sugg\195\169rer l'utilisation d'une comp\195\169tence de survie"
+
+-- Needs review
 LOCK_FRAME_DESCRIPTION = "Verrouiller le cadre MonkEC"
 
 -- Needs review
 LOCK_FRAMES = "Verrouiller"
+
+-- Needs review
+MORTALWOUNDS = "Blessures mortelles"
+
+-- Missing translation
+-- OPTIONALSUGGESTIONS = ""
+
+-- Needs review
+OPTIONS = "options"
+
+-- Needs review
+RESOURCETHRESHOLDS = "Seuil de Ressource"
+
+-- Needs review
+SANCTUARYOFTHEOX = "Sanctuaire du buffle"
 
 -- Needs review
 SCALE = "Echelle"
@@ -196,10 +274,52 @@ SCALE = "Echelle"
 SCALEDESCRIPTION = "Configure la taille du cadre MonkEC"
 
 -- Needs review
+SELECTSPEC = "Cacher tous les cadres tant qu'aucune sp\195\169c. n'est choisie."
+
+-- Needs review
 SHOWONLYINCOMBAT = "Afficher uniquement en Combat"
 
 -- Needs review
 SHOWONLYINCOMBATDESCRIPTION = "Configure l'affichage en combat uniquement"
+
+-- Needs review
+SHUFFLE = "Virevolte"
+
+-- Needs review
+STARTUPMESSAGE = "MonkEC charg\195\169. Taper /monkec config pour entrer dans le panneau de configuration"
+
+-- Needs review
+SUMMONSTATUECHECKBOXDESCRIPTION = "Sugg\195\168re l'utilisation d'Invocation d\226\128\153une statue du Buffle noir"
+
+-- Needs review
+TARGETCHI = "Chi cible"
+
+-- Needs review
+TARGETCHIDESCRIPTION = "Configurer la quantit\195\169 de Chi que MonkEC doit maintenir"
+
+-- Needs review
+TIGERPOWER = "Puissance du Tigre"
+
+-- Needs review
+TOUCHOFDEATH = "Toucher mortel"
+
+-- Needs review
+TOUCHOFDEATHCHECKBOXDESCRIPTION = "Sugg\195\168re l'utilisation de Toucher mortel"
+
+-- Needs review
+WEAKENEDBLOWS = "Coups affaiblis"
+
+-- Needs review
+XCOORDINATE = "Abscisse"
+
+-- Needs review
+XCOORDINATEDESCRIPTION = "Configurer l'abscisse pour le cadre de MonkEC"
+
+-- Needs review
+YCOORDINATE = "Ordonn\195\169e"
+
+-- Needs review
+YCOORDINATEDESCRIPTION = "Configurer l'ordonn\195\169e du cadre de MonkEC"
 
 end
 

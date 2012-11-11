@@ -145,6 +145,9 @@ MonkEC.external = {
 	scarletFever = MonkEC:GetSpellData(81132),
 	thrash = MonkEC:GetSpellData(115800),
 	thunderclap = MonkEC:GetSpellData(115799),
+	markOfTheWild = MonkEC:GetSpellData(1126),
+	blessingOfKings = MonkEC:GetSpellData(20217),
+	embraceOfTheShaleSpider = MonkEC:GetSpellData(90363),
 }
 
 function MonkEC:InspectSpecialization()
@@ -172,6 +175,10 @@ function MonkEC:InspectSpecialization()
 		if self.brewmaster.guard.cost ~= 2 then
 			self:Print("Guard cost is incorrect (" .. tostring(self.brewmaster.guard.cost) .. " vs 2).  Working around it.")
 			self.brewmaster.guard.cost = 2
+		end
+		if self.brewmaster.breathOfFire.cost ~= 2 then
+			self:Print("Breath of fire cost is incorrect (" .. tostring(self.brewmaster.breathOfFire.cost) .. " vs 2).  Working around it.")
+			self.brewmaster.breathOfFire.cost = 2
 		end
 	end
 	if self.talent.chiBurst.cost ~= 2 then
@@ -402,6 +409,10 @@ function MonkEC:UpdateTrackedBuffs()
 end
 
 function MonkEC:GatherCharacterState()
+	playerHasStatBoost = UnitBuff("player", self.common.legacyOfTheEmperor.name) ~= nil or
+		UnitBuff("player", self.external.markOfTheWild.name) ~= nil or
+		UnitBuff("player", self.external.blessingOfKings.name) ~= nil or
+		UnitBuff("player", self.external.embraceOfTheShaleSpider.name) ~= nil
 	local state = {
 		level = UnitLevel("player"),
 		stance = GetShapeshiftForm(),
@@ -412,7 +423,7 @@ function MonkEC:GatherCharacterState()
 		chi = UnitPower("player", SPELL_POWER_LIGHT_FORCE),
 		energy = UnitPower("player"),
 		
-		playerHasLegacyOfTheEmperor = UnitBuff("player", self.common.legacyOfTheEmperor.name) ~= nil,
+		playerHasLegacyOfTheEmperor = playerHasStatBoost,
 		playerHasSanctuaryOfTheOx = UnitBuff("player", self.buff.sanctuaryOfTheOx.name) ~= nil,
 		playerHasLegacyOfTheWhiteTiger = UnitBuff("player", self.windwalker.legacyOfTheWhiteTiger.name) ~= nil,
 		
