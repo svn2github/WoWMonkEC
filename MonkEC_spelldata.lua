@@ -420,7 +420,7 @@ function MonkEC:GatherCharacterState()
 		doAOE = self.db.profile.suggest_aoe,
 		inMeleeRange = IsSpellInRange(self.common.jab.name, "target") == 1,
 		currentHealthPercentage = UnitHealth("player") / UnitHealthMax("player") * 100,
-		chi = UnitPower("player", SPELL_POWER_LIGHT_FORCE),
+		chi = UnitPower("player", SPELL_POWER_CHI),
 		energy = UnitPower("player"),
 		
 		playerHasLegacyOfTheEmperor = playerHasStatBoost,
@@ -433,7 +433,6 @@ function MonkEC:GatherCharacterState()
 		weakenedBlowsSecondsLeft = weakenedBlowsSecondsLeft,
 		elusiveBrewCount = elusiveBrewCount,
 		tigerEyeCount = tigerEyeCount,
-		tigerPowerCount = tigerPowerCount,
 		tigerPowerSecondsLeft = tigerPowerSecondsLeft,
 		breathOfFireSecondsLeft = breathOfFireSecondsLeft,
 	}
@@ -448,10 +447,6 @@ function MonkEC:GatherCharacterState()
 	
 	if state.elusiveBrewCount == nil then
 		state.elusiveBrewCount = 0
-	end
-	
-	if state.tigerEyeCount == nil then
-		state.tigerEyeCount = 0
 	end
 	
 	if state.tigerPowerCount == nil then

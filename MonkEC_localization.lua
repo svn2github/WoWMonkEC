@@ -464,3 +464,144 @@ YCOORDINATE = "\208\154\208\190\208\190\209\128\208\180\208\184\208\189\208\176\
 -- Needs review
 YCOORDINATEDESCRIPTION = "\208\163\209\129\209\130\208\176\208\189\208\190\208\178\208\184\209\130\209\140 \208\186\208\190\208\190\209\128\208\180\208\184\208\189\208\176\209\130\209\131 Y \209\132\209\128\208\181\208\185\208\188\208\176 MonkEC"
 end
+
+if (GetLocale() == "zhCN") then
+
+-- Missing translation
+-- ABILITYQUEUEFRAME = ""
+
+-- Missing translation
+-- BADCOMMAND = ""
+
+-- Missing translation
+-- BADSCALEVALUE = ""
+
+-- Missing translation
+-- BLACKOXSTATUE = ""
+
+-- Missing translation
+-- BUFFSDEBUFFS = ""
+
+-- Missing translation
+-- BUFFSDEBUFFSFRAMEHEADER = ""
+
+-- Missing translation
+-- BUFFSSCALINGDESCRIPTION = ""
+
+-- Missing translation
+-- BUFFSXCOORDINATEDESCRIPTION = ""
+
+-- Missing translation
+-- BUFFSYCOORDINATEDESCRIPTION = ""
+
+-- Missing translation
+-- CONFIG = ""
+
+-- Missing translation
+-- ELUSIVEBREW = ""
+
+-- Missing translation
+-- ELUSIVEBREWTHRESHOLD = ""
+
+-- Missing translation
+-- ELUSIVEBREWTHRESHOLDDESCRIPTION = ""
+
+-- Missing translation
+-- ENABLE = ""
+
+-- Missing translation
+-- ENABLEABILITYQUEUE = ""
+
+-- Missing translation
+-- ENERGYTARGET = ""
+
+-- Missing translation
+-- ENERGYTARGETDESCRIPTION = ""
+
+-- Missing translation
+-- GUARD = ""
+
+-- Missing translation
+-- GUARDCHECKBOXDESCRIPTION = ""
+
+-- Missing translation
+-- HEALTHPANICTHRESHOLD = ""
+
+-- Missing translation
+-- HEALTHPANICTHRESHOLDDESCRIPTION = ""
+
+-- Needs review
+LOCK_FRAME_DESCRIPTION = "\233\148\129\229\174\154 MonkEC \231\170\151\229\143\163"
+
+-- Needs review
+LOCK_FRAMES = "\233\148\129\229\174\154\231\170\151\229\143\163"
+
+-- Missing translation
+-- MORTALWOUNDS = ""
+
+-- Missing translation
+-- OPTIONALSUGGESTIONS = ""
+
+-- Missing translation
+-- OPTIONS = ""
+
+-- Missing translation
+-- RESOURCETHRESHOLDS = ""
+
+-- Missing translation
+-- SANCTUARYOFTHEOX = ""
+
+-- Needs review
+SCALE = "\231\188\169\230\148\190"
+
+-- Needs review
+SCALEDESCRIPTION = "\232\174\190\231\189\174 MonkEC \231\170\151\229\143\163\231\154\132\231\188\169\230\148\190\230\175\148\228\190\139"
+
+-- Missing translation
+-- SELECTSPEC = ""
+
+-- Needs review
+SHOWONLYINCOMBAT = "\228\187\133\229\156\168\230\136\152\230\150\151\228\184\173\230\152\190\231\164\186"
+
+-- Needs review
+SHOWONLYINCOMBATDESCRIPTION = "\229\143\170\230\156\137\229\156\168\230\136\152\230\150\151\228\184\173\230\152\190\231\164\186 MonkEC \231\170\151\229\143\163"
+
+-- Missing translation
+-- SHUFFLE = ""
+
+-- Missing translation
+-- STARTUPMESSAGE = ""
+
+-- Missing translation
+-- SUMMONSTATUECHECKBOXDESCRIPTION = ""
+
+-- Missing translation
+-- TARGETCHI = ""
+
+-- Missing translation
+-- TARGETCHIDESCRIPTION = ""
+
+-- Missing translation
+-- TIGERPOWER = ""
+
+-- Missing translation
+-- TOUCHOFDEATH = ""
+
+-- Missing translation
+-- TOUCHOFDEATHCHECKBOXDESCRIPTION = ""
+
+-- Missing translation
+-- WEAKENEDBLOWS = ""
+
+-- Needs review
+XCOORDINATE = "\230\176\180\229\185\179\229\157\144\230\160\135"
+
+-- Needs review
+XCOORDINATEDESCRIPTION = "\232\174\190\231\189\174 MonkEC \231\170\151\229\143\163\231\154\132\230\176\180\229\185\179\229\157\144\230\160\135"
+
+-- Needs review
+YCOORDINATE = "\229\158\130\231\155\180\229\157\144\230\160\135"
+
+-- Needs review
+YCOORDINATEDESCRIPTION = "\232\174\190\231\189\174 MonkEC \231\170\151\229\143\163\231\154\132\229\158\130\231\155\180\229\157\144\230\160\135"
+end

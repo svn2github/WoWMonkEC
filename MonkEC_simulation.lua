@@ -99,7 +99,7 @@ function MonkEC:CreatePriorityLists()
 				return UnitExists("target") and
 						not self:ChiLow(characterState) and
 						not self:EnergyHigh(characterState) and
-						self:NeedsMoreTigerPower(characterState)
+						self:DebuffWearingOffSoon(self.buff.tigerPower, characterState)
 			end, 
 		},
 		{	spell = self.brewmaster.breathOfFire, 
@@ -297,9 +297,6 @@ function MonkEC:UpdateBuffsForSpell(spell, characterState)
 	elseif spell.id == self.brewmaster.breathOfFire.id then
 		characterState.breathOfFireSecondsLeft = MonkEC.breathOfFireDebuffLength
 	elseif spell.id == self.common.tigerPalm.id then
-		if characterState.tigerPowerCount < MonkEC.tigerPowerMaxStack then
-			characterState.tigerPowerCount = characterState.tigerPowerCount + 1
-		end
 		characterState.tigerPowerSecondsLeft = MonkEC.tigerPowerBuffLength
 	elseif spell.id == self.brewmaster.dizzyingHaze.id or spell.id == self.brewmaster.kegSmash.id then
 		characterState.weakenedBlowsSecondsLeft = MonkEC.weakenedBlowsDebuffLength
@@ -403,10 +400,6 @@ end
 
 function MonkEC:DumpChi(characterState)
 	return characterState.chi > dumpChiThreshold
-end
-
-function MonkEC:NeedsMoreTigerPower(characterState)
-	return characterState.tigerPowerCount < MonkEC.tigerPowerMaxStack
 end
 
 function MonkEC:FindNextSpellFrom(priorities, currentGCD, characterState)
