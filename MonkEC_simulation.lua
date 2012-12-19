@@ -70,13 +70,13 @@ function MonkEC:CreatePriorityLists()
 		{	spell = self.common.blackoutKick, 
 			condition = function(self, characterState) 
 				return UnitExists("target") and
-						self:BuffWearingOffSoon(self.buff.shuffle, characterState)
+						(self:BuffWearingOffSoon(self.buff.shuffle, characterState) or self:DumpChi(characterState))
 			end, 
 		},
 		{	spell = self.brewmaster.kegSmash, 
 			condition = function(self, characterState) 
-				return UnitExists("target") and
-						self:DebuffWearingOffSoon(self.debuff.weakenedBlows, characterState)
+				return UnitExists("target") --and
+						--self:DebuffWearingOffSoon(self.debuff.weakenedBlows, characterState)
 			end, 
 		},
 		{	spell = self.common.expelHarm, 
@@ -124,16 +124,16 @@ function MonkEC:CreatePriorityLists()
 			condition = function(self, characterState) return (self.db.profile.suggest_guard == true) end, },
 		{	spell = self:Level30Talent(), 
 			condition = function(self, characterState) return self:DamagedEnough(characterState) end, },
-		{	spell = self.common.blackoutKick, 
-			condition = function(self, characterState) 
-				return UnitExists("target") and self:DumpChi(characterState)
-			end, 
-		},
-		{	spell = self.brewmaster.kegSmash, 
-			condition = function(self, characterState) 
-				return UnitExists("target") and self:EnergyHigh(characterState)
-			end, 
-		},
+--		{	spell = self.common.blackoutKick, 
+--			condition = function(self, characterState) 
+--				return UnitExists("target") and self:DumpChi(characterState)
+--			end, 
+--		},
+--		{	spell = self.brewmaster.kegSmash, 
+--			condition = function(self, characterState) 
+--				return UnitExists("target") and self:EnergyHigh(characterState)
+--			end, 
+--		},
 		{	spell = self.common.tigerPalm, 
 			condition = function(self, characterState) 
 				return UnitExists("target")
@@ -154,11 +154,17 @@ function MonkEC:CreatePriorityLists()
 				return not self:PlayerHasBuff(self.common.legacyOfTheEmperor, characterState)
 			end, 
 		},
-		--{	spell = self.windwalker.stanceOfTheFierceTiger, 
-		--	condition = function(self, characterState) 
-		--		return self:StanceIsWrong(characterState); 
-		--	end, 
-		--},
+		{	spell = self.windwalker.stanceOfTheFierceTiger, 
+			condition = function(self, characterState) 
+				return self:StanceIsWrong(characterState); 
+			end, 
+		},
+		{	spell = self.windwalker.flyingSerpentKick, 
+			condition = function(self, characterState) 
+				return UnitExists("target") and 
+						not characterState.inMeleeRange
+			end, 
+		},
 		{	spell = self.windwalker.spinningFireBlossom, 
 			condition = function(self, characterState) 
 				return UnitExists("target") and 
@@ -170,18 +176,22 @@ function MonkEC:CreatePriorityLists()
 				return UnitExists("target")
 			end, 
 		},
+		{	spell = self.common.spinningCraneKick, 
+			condition = function(self, characterState) 
+				return self:DoAOE(characterState)
+			end, 
+		},
+		{	spell = self.common.tigerPalm, 
+			condition = function(self, characterState) 
+				return UnitExists("target") and 
+					not self:PlayerHasBuff(self.buff.tigerPower, characterState)
+			end, 
+		},
 		{	spell = self.common.expelHarm, 
 			condition = function(self, characterState) 
 				return UnitExists("target") and
 						self:EnergyHigh(characterState) and
 						self:DamagedEnough(characterState)
-			end, 
-		},
-		{	spell = self.common.jab, 
-			condition = function(self, characterState) 
-				return UnitExists("target") and
-						self:EnergyHigh(characterState) and
-						not self:ChiWillNotOverflow(self.common.jab, characterState)
 			end, 
 		},
 		{	spell = self.windwalker.tigerEyeBrew, 
@@ -192,35 +202,34 @@ function MonkEC:CreatePriorityLists()
 		},
 		{	spell = self.windwalker.fistsOfFury, 
 			condition = function(self, characterState) 
-				return UnitExists("target")
+				return UnitExists("target") and
+						self:EnergyLow(characterState)
 			end, 
 		},
 		{	spell = self.windwalker.energizingBrew, 
 			condition = function(self, characterState) 
-				return UnitExists("target")
+				return UnitExists("target") and 
+						self:EnergyLow(characterState)
 			end, 
 		},
 		{	spell = self.common.blackoutKick, 
 			condition = function(self, characterState) 
-				return UnitExists("target")
+				return UnitExists("target") and 
+						self:PlayerHasBuff(self.buff.comboBreakerBlackoutKick, characterState)
 			end, 
 		},
 		{	spell = self.common.tigerPalm, 
 			condition = function(self, characterState) 
-				return UnitExists("target")
+				return UnitExists("target") and 
+						self:PlayerHasBuff(self.buff.comboBreakerTigerPalm, characterState)
 			end, 
 		},
-		{	spell = self.common.expelHarm, 
+		{	spell = self.common.blackoutKick, 
 			condition = function(self, characterState) 
-				return UnitExists("target")
+				return UnitExists("target") and self:DumpChi(characterState)
 			end, 
 		},
 		{	spell = self.common.jab, 
-			condition = function(self, characterState) 
-				return UnitExists("target")
-			end, 
-		},
-		{	spell = self.windwalker.flyingSerpentKick, 
 			condition = function(self, characterState) 
 				return UnitExists("target")
 			end, 
@@ -294,10 +303,12 @@ function MonkEC:UpdateBuffsForSpell(spell, characterState)
 		characterState.stance = MonkEC.windwalkerStance
 	elseif spell.id == self.common.blackoutKick.id then
 		characterState.shuffleSecondsLeft = MonkEC.shuffleBuffLength
+		characterState.hasComboBreakerBlackoutKick = false
 	elseif spell.id == self.brewmaster.breathOfFire.id then
 		characterState.breathOfFireSecondsLeft = MonkEC.breathOfFireDebuffLength
 	elseif spell.id == self.common.tigerPalm.id then
 		characterState.tigerPowerSecondsLeft = MonkEC.tigerPowerBuffLength
+		characterState.hasComboBreakerTigerPalm = false
 	elseif spell.id == self.brewmaster.dizzyingHaze.id or spell.id == self.brewmaster.kegSmash.id then
 		characterState.weakenedBlowsSecondsLeft = MonkEC.weakenedBlowsDebuffLength
 	elseif spell.id == self.brewmaster.elusiveBrew.id then
@@ -320,11 +331,22 @@ function MonkEC:InDesperateNeedOfHealing(characterState)
 end
 
 function MonkEC:ChiLow(characterState)
-	return characterState.chi < MonkEC.db.profile.targetChi
+	local chiLow = false
+	if MonkEC.talentSpec == MonkEC.talentSpecBrewmaster then
+		chiLow = characterState.chi < MonkEC.db.profile.targetChi
+	else
+		chiLow = characterState.chi < 3
+	end
+	
+	return chiLow
 end
 
 function MonkEC:EnergyHigh(characterState)
 	return characterState.energy > MonkEC.db.profile.targetEnergy
+end
+
+function MonkEC:EnergyLow(characterState)
+	return characterState.energy < 20
 end
 
 function MonkEC:StaggerTooHigh(characterState)
@@ -340,7 +362,14 @@ function MonkEC:DoElusiveBrew(characterState)
 end
 
 function MonkEC:DoAOE(characterState)
-	return numTargets > 3 -- We're always damaging ourself with stagger
+	local doAOE = false;
+	if MonkEC.talentSpec == MonkEC.talentSpecBrewmaster then
+		doAOE = numTargets > 3 -- We're always damaging ourself with stagger
+	elseif MonkEC.talentSpec == MonkEC.talentSpecWindwalker  then
+		doAOE = numTargets > 4
+	end
+	
+	return doAOE
 end
 
 function MonkEC:ChiWillNotOverflow(spell, characterState)
@@ -368,10 +397,11 @@ end
 function MonkEC:BuffStackedTo(spell, targetStackSize, characterState)
 	local stacked = false
 	
-	if spell.id == self.buff.tigerEye.id then
---self:Print("Checking tiger eye stack size - " .. tostring(characterState.tigerEyeStacks) .. ">=" .. tostring(targetStackSize))
-		if characterState.tigerEyeCount >= targetStackSize then
-			stacked = true
+	if MonkEC.talentSpec == MonkEC.talentSpecBrewmaster then
+		if spell.id == self.buff.tigerEye.id then
+			if characterState.tigerEyeCount >= targetStackSize then
+				stacked = true
+			end
 		end
 	end
 	
@@ -399,7 +429,7 @@ function MonkEC:DamagedEnough(characterState)
 end
 
 function MonkEC:DumpChi(characterState)
-	return characterState.chi > dumpChiThreshold
+	return characterState.chi >= dumpChiThreshold
 end
 
 function MonkEC:FindNextSpellFrom(priorities, currentGCD, characterState)
@@ -452,12 +482,24 @@ end
 function MonkEC:PlayerHasBuff(spell, characterState)
 	local hasBuff = false
 
-	if spell.id == self.buff.sanctuaryOfTheOx.id then
-		hasBuff = characterState.playerHasSanctuaryOfTheOx
-	elseif spell.id == self.common.legacyOfTheEmperor.id then
+	if spell.id == self.common.legacyOfTheEmperor.id then
 		hasBuff = characterState.playerHasLegacyOfTheEmperor
-	elseif spell.id == self.brewmaster.shuffle.id then
-		hasBuff = characterState.shuffleSecondsLeft > 0
+	elseif spell.id == self.buff.tigerPower.id then
+		hasBuff = characterState.tigerPowerSecondsLeft > 0
+	elseif MonkEC.talentSpec == MonkEC.talentSpecBrewmaster then
+		if spell.id == self.buff.sanctuaryOfTheOx.id then
+			hasBuff = characterState.playerHasSanctuaryOfTheOx
+		elseif spell.id == self.brewmaster.shuffle.id then
+			hasBuff = characterState.shuffleSecondsLeft > 0
+		end
+	elseif MonkEC.talentSpec == MonkEC.talentSpecWindwalker then
+		if spell.id == self.buff.legacyOfTheWhiteTiger.id then
+			hasBuff = characterState.playerHasLegacyOfTheWhiteTiger
+		elseif spell.id == self.buff.comboBreakerBlackoutKick.id then
+			hasBuff = characterState.hasComboBreakerBlackoutKick
+		elseif spell.id == self.buff.comboBreakerTigerPalm.id then
+			hasBuff = characterState.hasComboBreakerTigerPalm
+		end
 	end
 	
 	return hasBuff

@@ -109,9 +109,8 @@ MonkEC.brewmaster = {
 
 MonkEC.windwalker = {
 	energizingBrew = MonkEC:GetSpellData(115288),
-	fistsOfFury = MonkEC:GetSpellData(117418),
+	fistsOfFury = MonkEC:GetSpellData(113656),
 	flyingSerpentKick = MonkEC:GetSpellData(101545),
-	legacyOfTheWhiteTiger = MonkEC:GetSpellData(116781),
 	risingSunKick = MonkEC:GetSpellData(107428),
 	spinningFireBlossom = MonkEC:GetSpellData(115073),
 	stanceOfTheFierceTiger = MonkEC:GetSpellData(103985),
@@ -120,6 +119,8 @@ MonkEC.windwalker = {
 
 -- Spell Details for Buffs
 MonkEC.buff = {
+	comboBreakerBlackoutKick = MonkEC:GetSpellData(116768),
+	comboBreakerTigerPalm = MonkEC:GetSpellData(118864),
 	legacyOfTheWhiteTiger = MonkEC:GetSpellData(116781),
 	powerGuard = MonkEC:GetSpellData(118636),
 	sanctuaryOfTheOx = MonkEC:GetSpellData(126119),
@@ -148,6 +149,13 @@ MonkEC.external = {
 	markOfTheWild = MonkEC:GetSpellData(1126),
 	blessingOfKings = MonkEC:GetSpellData(20217),
 	embraceOfTheShaleSpider = MonkEC:GetSpellData(90363),
+	leaderOfThePack = MonkEC:GetSpellData(17007),
+	arcaneBrilliance = MonkEC:GetSpellData(1459),
+	dalaranBrilliance = MonkEC:GetSpellData(61316),
+	furiousHowl = MonkEC:GetSpellData(24604),
+	terrifyingRoar = MonkEC:GetSpellData(90309),
+	fearlessRoar = MonkEC:GetSpellData(126373),
+	stillWater = MonkEC:GetSpellData(126309),
 }
 
 function MonkEC:InspectSpecialization()
@@ -202,7 +210,6 @@ function MonkEC:InspectSpecialization()
 			self:Print("Fists of Fury cost is incorrect (" .. tostring(self.windwalker.fistsOfFury.cost) .. " vs 3).  Working around it.")
 			self.windwalker.fistsOfFury.cost = 3
 			self.windwalker.fistsOfFury.powerType = MonkEC.chiPowerType
-			self.windwalker.fistsOfFury.cooldown = 25
 		end
 		if self.windwalker.risingSunKick.cost ~= 2 then
 			self:Print("Rising Sun cost is incorrect (" .. tostring(self.windwalker.risingSunKick.cost) .. " vs 2).  Working around it.")
@@ -376,7 +383,7 @@ function MonkEC:UpdateTrackedBuffs()
 		tigerPowerSecondsLeft = 0
 	end
 	
-	tigerEyeSpell = MonkEC.windwalker.tigerEye
+	tigerEyeSpell = MonkEC.buff.tigerEye
 	_,_,_,tigerEyeCount,_,_,tigerEyeExpirationTime,_,_ = UnitAura("player", MonkEC.buff.tigerEye.name)
 	if tigerEyeExpirationTime ~= nil then
 		tigerEyeSecondsLeft = tigerEyeExpirationTime - GetTime()
@@ -413,6 +420,13 @@ function MonkEC:GatherCharacterState()
 		UnitBuff("player", self.external.markOfTheWild.name) ~= nil or
 		UnitBuff("player", self.external.blessingOfKings.name) ~= nil or
 		UnitBuff("player", self.external.embraceOfTheShaleSpider.name) ~= nil
+	playerHasCritBoost = UnitBuff("player", self.buff.legacyOfTheWhiteTiger.name) ~= nil or
+		UnitBuff("player", self.external.leaderOfThePack.name) ~= nil or
+		UnitBuff("player", self.external.arcaneBrilliance.name) ~= nil or
+		UnitBuff("player", self.external.furiousHowl.name) ~= nil or
+		UnitBuff("player", self.external.terrifyingRoar.name) ~= nil or
+		UnitBuff("player", self.external.fearlessRoar.name) ~= nil or
+		UnitBuff("player", self.external.stillWater.name) ~= nil
 	local state = {
 		level = UnitLevel("player"),
 		stance = GetShapeshiftForm(),
@@ -425,8 +439,11 @@ function MonkEC:GatherCharacterState()
 		
 		playerHasLegacyOfTheEmperor = playerHasStatBoost,
 		playerHasSanctuaryOfTheOx = UnitBuff("player", self.buff.sanctuaryOfTheOx.name) ~= nil,
-		playerHasLegacyOfTheWhiteTiger = UnitBuff("player", self.windwalker.legacyOfTheWhiteTiger.name) ~= nil,
+		playerHasLegacyOfTheWhiteTiger = playerHasCritBoost,
 		
+		hasComboBreakerBlackoutKick = UnitBuff("player", self.buff.comboBreakerBlackoutKick.name) ~= nil,
+		hasComboBreakerTigerPalm = UnitBuff("player", self.buff.comboBreakerTigerPalm.name) ~= nil,
+
 		shuffleSecondsLeft = shuffleSecondsLeft,
 		staggerTooHigh = (UnitDebuff("player", self.debuff.moderateStagger.name) ~= nil) or 
 						(UnitDebuff("player", self.debuff.heavyStagger.name) ~= nil),

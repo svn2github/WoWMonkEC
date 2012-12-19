@@ -1,8 +1,8 @@
 ## Interface: 50100
 ## Title: MonkEC
 ## Notes: Monk Brewmaster Priority and Buff/Debuff Tracking Tool
-## Author: tmlennan (Kyuti of Feathermoon-US)
-## Version: 1.0.6
+## Author: tmlennan (Kyuti of Kul Tiras-US)
+## Version: 1.0.7
 ## SavedVariables: MonkECDB
 ## OptionalDeps Age3, LibSharedMedia-3.0
 

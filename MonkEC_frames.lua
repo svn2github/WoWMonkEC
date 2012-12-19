@@ -8,8 +8,6 @@ local abilityIconXOffset = { [1] = 8, [2] = 80, [3] = 136 }
 local abilityIconYOffset = 8
 local buffIconXOffset = { [1] = 13, [2] = 57, [3] = 101, [4] = 145 }
 local buffIconYOffset = 8
---local aoeToggleXOffset = 190
---local aoeToggleYOffset = 0
 
 local timeSinceLastUpdate = 0
 local updateFrequency = 0.1
@@ -78,19 +76,6 @@ function MonkEC:InitAbilityFrame()
 		MonkEC:CreateAbilityFrame("MonkECAbility3", baseFrame, 
 			MonkEC.brewmaster.clash, abilityIconXOffset[3], abilityIconYOffset, iconSizeSmall, scale),
 	}
-	
-	-- AOE check Box
---	aoeToggle = AceGUI:Create("CheckBox")
---	aoeToggle:SetLabel("AOE")
---	aoeToggle:SetType("checkbox")
---	aoeToggle:SetValue(self.db.profile.suggest_aoe)
---	aoeToggle:SetCallback("OnValueChanged", function(widget, callback) MonkEC.db.profile.suggest_aoe = widget:GetValue() end)
---	aoeToggle.frame:ClearAllPoints()
---	aoeToggle.frame:SetPoint("BOTTOMLEFT", baseFrame, "BOTTOMLEFT", 
---			aoeToggleXOffset * scale, aoeToggleYOffset * scale)
---	aoeToggle.frame:Show()
-
---	baseFrame.aoeToggle = aoeToggle
 
 	-- Set X/Y points, enable mouse 
 	baseFrame:ClearAllPoints()
@@ -108,9 +93,6 @@ function MonkEC:InitAbilityFrame()
 		baseFrame:StopMovingOrSizing()
 		profile.frame_x = baseFrame:GetLeft()
 		profile.frame_y = baseFrame:GetTop()
---		baseFrame.aoeToggle.frame:ClearAllPoints()
---		baseFrame.aoeToggle.frame:SetPoint("BOTTOMLEFT", baseFrame, "BOTTOMLEFT", 
---				aoeToggleXOffset * scale, aoeToggleYOffset * scale)
 	end)	
 
 	if (self.db.profile.isLocked == true) then
@@ -251,12 +233,10 @@ function MonkEC:UpdateFrameVisibility()
 	if showAbilityFrame then
 		if not self.frame:IsShown() then
 			self.frame:Show()
---			self.frame.aoeToggle.frame:Show()
 		end
 	else
 		if self.frame:IsShown() then
 			self.frame:Hide()
---			self.frame.aoeToggle.frame:Hide()
 		end
 	end
 				
@@ -299,10 +279,6 @@ function MonkEC:ScaleFrame()
 	self:ScaleSpell(frame.abilityFrame[1], frame, abilityIconXOffset[1], abilityIconYOffset, iconSize, scale)
 	self:ScaleSpell(frame.abilityFrame[2], frame, abilityIconXOffset[2], abilityIconYOffset, iconSmallSize, scale)
 	self:ScaleSpell(frame.abilityFrame[3], frame, abilityIconXOffset[3], abilityIconYOffset, iconSmallSize, scale)
-	
---	frame.aoeToggle.frame:ClearAllPoints()
---	frame.aoeToggle.frame:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 
---				aoeToggleXOffset * scale, aoeToggleYOffset * scale)
 end
 
 function MonkEC:SetBuffScale(info, value)
