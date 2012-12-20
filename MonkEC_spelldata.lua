@@ -466,6 +466,10 @@ function MonkEC:GatherCharacterState()
 		state.elusiveBrewCount = 0
 	end
 	
+	if state.tigerEyeCount == nil then
+		state.tigerEyeCount = 0
+	end
+	
 	if state.tigerPowerCount == nil then
 		state.tigerPowerCount = 0
 	end

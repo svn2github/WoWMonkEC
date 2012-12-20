@@ -171,7 +171,7 @@ function MonkEC:CreatePriorityLists()
 						not characterState.inMeleeRange
 			end, 
 		},
-		{	spell = self.common.risingSunKick, 
+		{	spell = self.windwalker.risingSunKick, 
 			condition = function(self, characterState) 
 				return UnitExists("target")
 			end, 
@@ -315,6 +315,8 @@ function MonkEC:UpdateBuffsForSpell(spell, characterState)
 		characterState.elusiveBrewCount = 0;
 	elseif spell.id == self.brewmaster.purifyingBrew.id then
 		characterState.staggerTooHigh = false;
+	elseif spell.id == self.windwalker.tigerEyeBrew.id then
+		characterState.tigerEyeCount = 0;
 	end
 end
 
@@ -397,7 +399,7 @@ end
 function MonkEC:BuffStackedTo(spell, targetStackSize, characterState)
 	local stacked = false
 	
-	if MonkEC.talentSpec == MonkEC.talentSpecBrewmaster then
+	if MonkEC.talentSpec == MonkEC.talentSpecWindwalker then
 		if spell.id == self.buff.tigerEye.id then
 			if characterState.tigerEyeCount >= targetStackSize then
 				stacked = true
@@ -405,7 +407,7 @@ function MonkEC:BuffStackedTo(spell, targetStackSize, characterState)
 		end
 	end
 	
-	return wearingOffSoon
+	return stacked
 end
 
 function MonkEC:DebuffWearingOffSoon(spell, characterState)
