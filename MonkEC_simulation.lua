@@ -75,8 +75,7 @@ function MonkEC:CreatePriorityLists()
 		},
 		{	spell = self.brewmaster.kegSmash, 
 			condition = function(self, characterState) 
-				return UnitExists("target") --and
-						--self:DebuffWearingOffSoon(self.debuff.weakenedBlows, characterState)
+				return UnitExists("target")
 			end, 
 		},
 		{	spell = self.common.expelHarm, 
@@ -124,16 +123,6 @@ function MonkEC:CreatePriorityLists()
 			condition = function(self, characterState) return (self.db.profile.suggest_guard == true) end, },
 		{	spell = self:Level30Talent(), 
 			condition = function(self, characterState) return self:DamagedEnough(characterState) end, },
---		{	spell = self.common.blackoutKick, 
---			condition = function(self, characterState) 
---				return UnitExists("target") and self:DumpChi(characterState)
---			end, 
---		},
---		{	spell = self.brewmaster.kegSmash, 
---			condition = function(self, characterState) 
---				return UnitExists("target") and self:EnergyHigh(characterState)
---			end, 
---		},
 		{	spell = self.common.tigerPalm, 
 			condition = function(self, characterState) 
 				return UnitExists("target")
@@ -154,6 +143,11 @@ function MonkEC:CreatePriorityLists()
 				return not self:PlayerHasBuff(self.common.legacyOfTheEmperor, characterState)
 			end, 
 		},
+		{	spell = self.windwalker.legacyOfTheWhiteTiger, 
+			condition = function(self, characterState) 
+				return not self:PlayerHasBuff(self.buff.legacyOfTheWhiteTiger, characterState)
+			end, 
+		},
 		{	spell = self.windwalker.stanceOfTheFierceTiger, 
 			condition = function(self, characterState) 
 				return self:StanceIsWrong(characterState); 
@@ -171,6 +165,12 @@ function MonkEC:CreatePriorityLists()
 						not characterState.inMeleeRange
 			end, 
 		},
+		{	spell = self.common.tigerPalm, 
+			condition = function(self, characterState) 
+				return UnitExists("target") and 
+					not self:PlayerHasBuff(self.buff.tigerPower, characterState)
+			end, 
+		},
 		{	spell = self.windwalker.risingSunKick, 
 			condition = function(self, characterState) 
 				return UnitExists("target")
@@ -179,12 +179,6 @@ function MonkEC:CreatePriorityLists()
 		{	spell = self.common.spinningCraneKick, 
 			condition = function(self, characterState) 
 				return self:DoAOE(characterState)
-			end, 
-		},
-		{	spell = self.common.tigerPalm, 
-			condition = function(self, characterState) 
-				return UnitExists("target") and 
-					not self:PlayerHasBuff(self.buff.tigerPower, characterState)
 			end, 
 		},
 		{	spell = self.common.expelHarm, 
@@ -203,7 +197,7 @@ function MonkEC:CreatePriorityLists()
 		{	spell = self.windwalker.fistsOfFury, 
 			condition = function(self, characterState) 
 				return UnitExists("target") and
-						self:EnergyLow(characterState)
+						self:EnergyLow(characterState) and self:ShouldDoFistsOfFury(characterState)
 			end, 
 		},
 		{	spell = self.windwalker.energizingBrew, 
@@ -251,6 +245,10 @@ function MonkEC:FindNextSpell(currentGCD, characterState)
 	end
 
 	if spell ~= nil then
+		if spell.id == self.talent.zenSphere.id then
+			spell = self:Level30Talent()
+		end
+		
 		self:UpdateStateForSpellcast(spell, characterState)
 	end
 
@@ -268,16 +266,19 @@ end
 function MonkEC:NextGCD(characterState)
 	characterState.energy = characterState.energy + MonkEC.energyGeneratedPerGCD_brewmaster
 	characterState.breathOfFireSecondsLeft = characterState.breathOfFireSecondsLeft - MonkEC.theGCD
+	characterState.risingSunKickSecondsLeft = characterState.risingSunKickSecondsLeft - MonkEC.theGCD
 	characterState.shuffleSecondsLeft = characterState.shuffleSecondsLeft - MonkEC.theGCD
 	characterState.tigerPowerSecondsLeft = characterState.tigerPowerSecondsLeft - MonkEC.theGCD
 	characterState.weakenedBlowsSecondsLeft = characterState.weakenedBlowsSecondsLeft - MonkEC.theGCD
 end
 
 function MonkEC:ConsumePowerForSpell(spell, characterState)
-	if spell.powerType == MonkEC.energyPowerType then
-		characterState.energy = characterState.energy - spell.cost
-	elseif spell.powerType == MonkEC.chiPowerType then
-		characterState.chi = characterState.chi - spell.cost
+	local _, _, _, cost, _, powerType = GetSpellInfo(spell.id); 
+
+	if powerType == MonkEC.energyPowerType then
+		characterState.energy = characterState.energy - cost
+	elseif powerType == MonkEC.chiPowerType then
+		characterState.chi = characterState.chi - cost
 	end	
 end
 
@@ -297,6 +298,8 @@ function MonkEC:UpdateBuffsForSpell(spell, characterState)
 		characterState.playerHasSanctuaryOfTheOx = true
 	elseif spell.id == self.common.legacyOfTheEmperor.id then
 		characterState.playerHasLegacyOfTheEmperor = true
+	elseif spell.id == self.windwalker.legacyOfTheWhiteTiger.id then
+		characterState.playerHasLegacyOfTheWhiteTiger = true
 	elseif spell.id == self.brewmaster.stanceOfTheSturdyOx.id then
 		characterState.stance = MonkEC.brewmasterStance
 	elseif spell.id == self.windwalker.stanceOfTheFierceTiger.id then
@@ -306,6 +309,8 @@ function MonkEC:UpdateBuffsForSpell(spell, characterState)
 		characterState.hasComboBreakerBlackoutKick = false
 	elseif spell.id == self.brewmaster.breathOfFire.id then
 		characterState.breathOfFireSecondsLeft = MonkEC.breathOfFireDebuffLength
+	elseif spell.id == self.windwalker.risingSunKick.id then
+		characterState.risingSunKickSecondsLeft = MonkEC.risingSunKickDebuffLength
 	elseif spell.id == self.common.tigerPalm.id then
 		characterState.tigerPowerSecondsLeft = MonkEC.tigerPowerBuffLength
 		characterState.hasComboBreakerTigerPalm = false
@@ -328,6 +333,16 @@ function MonkEC:IncreaseCooldown(spell)
 	end
 end
 
+function MonkEC:ShouldDoFistsOfFury(characterState)
+	return not MonkEC:Hasted(characterState) and 
+			not MonkEC:DebuffWearingOffBefore(self.windwalker.risingSunKick, characterState, MonkEC.fistsOfFuryDuration) and 
+			not MonkEC:BuffWearingOffBefore(self.buff.tigerPower, characterState, MonkEC.fistsOfFuryDuration)
+end
+
+function MonkEC:Hasted(characterState)
+	return false
+end
+
 function MonkEC:InDesperateNeedOfHealing(characterState)
 	return characterState.currentHealthPercentage < MonkEC.db.profile.dangerousHealth
 end
@@ -348,7 +363,7 @@ function MonkEC:EnergyHigh(characterState)
 end
 
 function MonkEC:EnergyLow(characterState)
-	return characterState.energy < 20
+	return characterState.energy < 30
 end
 
 function MonkEC:StaggerTooHigh(characterState)
@@ -385,10 +400,18 @@ function MonkEC:ChiWillNotOverflow(spell, characterState)
 end
 
 function MonkEC:BuffWearingOffSoon(spell, characterState)
-	local wearingOffSoon = true
+	return MonkEC:BuffWearingOffBefore(spell, characterState, MonkEC.theGCD)
+end
+
+function MonkEC:BuffWearingOffBefore(spell, characterState, duration)
+	local wearingOffBefore = true
 	
 	if spell.id == self.buff.shuffle.id then
 		if characterState.shuffleSecondsLeft > MonkEC.theGCD or characterState.level < 72 then
+			wearingOffSoon = false
+		end
+	elseif spell.id == self.buff.tigerPower.id then
+		if characterState.tigerPowerSecondsLeft > duration then
 			wearingOffSoon = false
 		end
 	end
@@ -411,19 +434,27 @@ function MonkEC:BuffStackedTo(spell, targetStackSize, characterState)
 end
 
 function MonkEC:DebuffWearingOffSoon(spell, characterState)
-	local wearingOffSoon = true
+	return MonkEC:DebuffWearingOffBefore(spell, characterState, MonkEC.theGCD)
+end
+
+function MonkEC:DebuffWearingOffBefore(spell, characterState, duration)
+	local wearingOffBefore = true
 	
 	if spell.id == self.debuff.weakenedBlows.id then
-		if characterState.weakenedBlowsSecondsLeft > MonkEC.theGCD then
-			wearingOffSoon = false
+		if characterState.weakenedBlowsSecondsLeft > duration then
+			wearingOffBefore = false
 		end
 	elseif spell.id == self.brewmaster.breathOfFire.id then
-		if characterState.breathOfFireSecondsLeft > MonkEC.theGCD then
-			wearingOffSoon = false
+		if characterState.breathOfFireSecondsLeft > duration then
+			wearingOffBefore = false
+		end
+	elseif spell.id == self.windwalker.risingSunKick.id then
+		if characterState.risingSunKickSecondsLeft > duration then
+			wearingOffBefore = false
 		end
 	end
 	
-	return wearingOffSoon
+	return wearingOffBefore
 end
 
 function MonkEC:DamagedEnough(characterState)
@@ -458,11 +489,13 @@ function MonkEC:IsHighEnoughLevel(spell, characterState)
 end
 
 function MonkEC:HasEnoughResources(spell, characterState)
+	local _, _, _, cost, _, powerType = GetSpellInfo(spell.id); 
+
 	local haveEnoughResources = true
-	if spell.powerType == MonkEC.energyPowerType then
-		haveEnoughResources = characterState.energy >= spell.cost
-	elseif spell.powerType == MonkEC.chiPowerType then
-		haveEnoughResources = characterState.chi >= spell.cost
+	if powerType == MonkEC.energyPowerType then
+		haveEnoughResources = characterState.energy >= cost
+	elseif powerType == MonkEC.chiPowerType then
+		haveEnoughResources = characterState.chi >= cost
 	end
 
 	return haveEnoughResources

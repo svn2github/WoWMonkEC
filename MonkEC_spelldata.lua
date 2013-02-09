@@ -2,6 +2,7 @@ local _, trueclass = UnitClass("player")
 if trueclass ~= "MONK" then return end
 
 MonkEC.theGCD = 1.0
+MonkEC.fistsOfFuryDuration = 4.0
 
 -- Talents
 MonkEC.talentSpec = -1 -- Brewmaster (1), Mistweaver (2), Windwalker (3)
@@ -35,14 +36,15 @@ local weakenedBlowsCount,weakenedBlowsSecondsLeft,weakenedBlowsSpell
 
 -- Debuff lengths
 MonkEC.breathOfFireDebuffLength = 8
+MonkEC.risingSunKickDebuffLength = 15
 
 -- Debuff info
-local breathOfFireCount, breathOfFireSecondsLeft, breathOfFireSpell
+local breathOfFireCount, breathOfFireSecondsLeft
+local risingSunKickCount, risingSunKickSecondsLeft
 
 function MonkEC:GetSpellData(id) 
-	local name, _, icon, cost, _, powerType = GetSpellInfo(id); 
-
-	return { name=name, id=id, icon=icon, cost=cost, powerType=powerType } 
+	local name, _, icon, _, _, _ = GetSpellInfo(id); 
+	return { name=name, id=id, icon=icon } 
  end 
  
 -- Spells shared between specs
@@ -88,7 +90,7 @@ MonkEC.talent = {
 	-- lvl 90
 	invokeXuen = MonkEC:GetSpellData(123904),
 	rushingJadeWind = MonkEC:GetSpellData(116847),
-	spinningFireBlossom = MonkEC:GetSpellData(115073),
+	chiTorpedo = MonkEC:GetSpellData(115008),
 }
 
 MonkEC.brewmaster = {
@@ -111,6 +113,7 @@ MonkEC.windwalker = {
 	energizingBrew = MonkEC:GetSpellData(115288),
 	fistsOfFury = MonkEC:GetSpellData(113656),
 	flyingSerpentKick = MonkEC:GetSpellData(101545),
+	legacyOfTheWhiteTiger = MonkEC:GetSpellData(116781),
 	risingSunKick = MonkEC:GetSpellData(107428),
 	spinningFireBlossom = MonkEC:GetSpellData(115073),
 	stanceOfTheFierceTiger = MonkEC:GetSpellData(103985),
@@ -121,6 +124,7 @@ MonkEC.windwalker = {
 MonkEC.buff = {
 	comboBreakerBlackoutKick = MonkEC:GetSpellData(116768),
 	comboBreakerTigerPalm = MonkEC:GetSpellData(118864),
+	heroism = MonkEC:GetSpellData(32182),
 	legacyOfTheWhiteTiger = MonkEC:GetSpellData(116781),
 	powerGuard = MonkEC:GetSpellData(118636),
 	sanctuaryOfTheOx = MonkEC:GetSpellData(126119),
@@ -169,53 +173,6 @@ function MonkEC:InspectSpecialization()
 	end
 	
 	MonkEC.haveHealingElixirs = GetSpellBookItemInfo(MonkEC.talent.healingElixirs.name) ~= nil
-	
-	-- TODO remove when bug is fixed
-	if self.common.blackoutKick.cost ~= 2 then
-		self:Print("Blackout Kick cost is incorrect (" .. tostring(self.common.blackoutKick.cost) .. " vs 2).  Working around it.")
-		self.common.blackoutKick.cost = 2
-	end
-	if self.common.touchOfDeath.cost ~= 3 then
-		self:Print("Touch of Death cost is incorrect (" .. tostring(self.common.touchOfDeath.cost) .. " vs 3).  Working around it.")
-		self.common.touchOfDeath.cost = 3
-	end
-	if MonkEC.talentSpec == MonkEC.talentSpecBrewmaster then
-		if self.brewmaster.guard.cost ~= 2 then
-			self:Print("Guard cost is incorrect (" .. tostring(self.brewmaster.guard.cost) .. " vs 2).  Working around it.")
-			self.brewmaster.guard.cost = 2
-		end
-		if self.brewmaster.breathOfFire.cost ~= 2 then
-			self:Print("Breath of fire cost is incorrect (" .. tostring(self.brewmaster.breathOfFire.cost) .. " vs 2).  Working around it.")
-			self.brewmaster.breathOfFire.cost = 2
-		end
-	end
-	if self.talent.chiBurst.cost ~= 2 then
-		self:Print("Chi Burst cost is incorrect (" .. tostring(self.talent.chiBurst.cost) .. " vs 2).  Working around it.")
-		self.talent.chiBurst.cost = 2
-	end
-	if self.talent.zenSphere.cost ~= 2 then
-		self:Print("Zen Sphere cost is incorrect (" .. tostring(self.talent.zenSphere.cost) .. " vs 2).  Working around it.")
-		self.talent.zenSphere.cost = 2
-	end
-	if self.talent.chiWave.cost ~= 2 then
-		self:Print("Chi Wave cost is incorrect (" .. tostring(self.talent.chiWave.cost) .. " vs 2).  Working around it.")
-		self.talent.chiWave.cost = 2
-	end
-	if MonkEC.talentSpec == MonkEC.talentSpecWindwalker then
-		if self.windwalker.spinningFireBlossom.cost ~= 1 then
-			self:Print("Spinning Fire Blossom cost is incorrect (" .. tostring(self.windwalker.spinningFireBlossom.cost) .. " vs 1).  Working around it.")
-			self.windwalker.spinningFireBlossom.cost = 1
-		end
-		if self.windwalker.fistsOfFury.cost ~= 3 then
-			self:Print("Fists of Fury cost is incorrect (" .. tostring(self.windwalker.fistsOfFury.cost) .. " vs 3).  Working around it.")
-			self.windwalker.fistsOfFury.cost = 3
-			self.windwalker.fistsOfFury.powerType = MonkEC.chiPowerType
-		end
-		if self.windwalker.risingSunKick.cost ~= 2 then
-			self:Print("Rising Sun cost is incorrect (" .. tostring(self.windwalker.risingSunKick.cost) .. " vs 2).  Working around it.")
-			self.windwalker.risingSunKick.cost = 2
-		end
-	end
 end
 
 function MonkEC:SetChiGeneration()
@@ -296,6 +253,36 @@ function MonkEC:Level30Talent()
 	
 	return spell
 end
+function MonkEC:Level90Talent()
+	local spell = nil
+	
+	-- for i = 1,18 do
+		-- local name, texture, tier, column, selected, available = GetTalentInfo(i)
+		-- self:Print("GetTalentInfo " .. i .. " name " .. tostring(name) .. " selected=" .. tostring(selected))
+	-- end
+	
+	local name,_,_,_,selected,_ = GetTalentInfo(16)
+	if selected then
+		spell = MonkEC.talent.rushingJadeWind
+	else
+		name,_,_,_,selected,_ = GetTalentInfo(17)
+		if selected then
+			spell = MonkEC.talent.invokeXuen
+		else
+			name,_,_,_,selected,_ = GetTalentInfo(18)
+			if selected then
+				spell = MonkEC.talent.chiTorpedo
+			end
+		end
+	end
+
+	if spell == nil then -- TODO bug workaround
+		spell = MonkEC.talent.zenSphere
+		self:Print("Can't figure out lvl30 spell.  Forcing to " .. spell.name)
+	end
+	
+	return spell
+end
 
 function MonkEC:GetBuffInfo(num)
 	local buffInfo
@@ -326,6 +313,7 @@ function MonkEC:UpdateTrackedBuffs()
 	local tigerPowerExpirationTime = nil
 	local weakenedBlowsExpirationTime = nil
 	local breathOfFireExpirationTime = nil
+	local risingSunKickExpirationTime = nil
 
 	_,_,_,weakenedBlowsExpirationCount,_,_,weakenedBlowsExpirationTime,_,_ = UnitDebuff("target", MonkEC.external.earthShock.name)
 	if (weakenedBlowsExpirationTime ~= nil) then
@@ -413,6 +401,13 @@ function MonkEC:UpdateTrackedBuffs()
 	else
 		breathOfFireSecondsLeft = 0
 	end
+	
+	_,_,_,_,_,_,risingSunKickExpirationTime,_,_ = UnitDebuff("target", MonkEC.windwalker.risingSunKick.name)
+	if risingSunKickExpirationTime ~= nil then
+		risingSunKickSecondsLeft = risingSunKickExpirationTime - GetTime()
+	else
+		risingSunKickSecondsLeft = 0
+	end
 end
 
 function MonkEC:GatherCharacterState()
@@ -452,6 +447,7 @@ function MonkEC:GatherCharacterState()
 		tigerEyeCount = tigerEyeCount,
 		tigerPowerSecondsLeft = tigerPowerSecondsLeft,
 		breathOfFireSecondsLeft = breathOfFireSecondsLeft,
+		risingSunKickSecondsLeft = risingSunKickSecondsLeft,
 	}
 
 	if state.doAOE == nil then
@@ -484,6 +480,10 @@ function MonkEC:GatherCharacterState()
 	
 	if state.breathOfFireSecondsLeft == nil then
 		state.breathOfFireSecondsLeft = 0
+	end
+	
+	if state.risingSunKickSecondsLeft == nil then
+		state.risingSunKickSecondsLeft = 0
 	end
 	
 	return state
