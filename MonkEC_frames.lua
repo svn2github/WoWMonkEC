@@ -338,7 +338,11 @@ function MonkEC:RefreshTextures()
 	self.buffFrame.buff1.icon:SetTexture(self.buffFrame.buff1.spell.icon)
 	self.buffFrame.buff2.icon:SetTexture(self.buffFrame.buff2.spell.icon)
 	self.buffFrame.buff3.icon:SetTexture(self.buffFrame.buff3.spell.icon)
-	self.buffFrame.buff4.icon:SetTexture(self.buffFrame.buff4.spell.icon)
+	if self.buffFrame.buff4.spell == nil then
+		self.buffFrame.buff4.icon:SetTexture(nil)
+	else
+		self.buffFrame.buff4.icon:SetTexture(self.buffFrame.buff4.spell.icon)
+	end
 end
 
 ------------------------------------
@@ -369,10 +373,10 @@ function MonkEC:UpdateBuffFrame()
 	local buff4 = self.buffFrame.buff4
 
 	-- Update buff icons
-	buff1.spell,buff1.secondsLeft,buff1.stacknum = self:GetBuffInfo(self.db.profile.tracked_buffs_1)
-	buff2.spell,buff2.secondsLeft,buff2.stacknum = self:GetBuffInfo(self.db.profile.tracked_buffs_2)
-	buff3.spell,buff3.secondsLeft,buff3.stacknum = self:GetBuffInfo(self.db.profile.tracked_buffs_3)
-	buff4.spell,buff4.secondsLeft,buff4.stacknum = self:GetBuffInfo(self.db.profile.tracked_buffs_4)
+	buff1.spell,buff1.secondsLeft,buff1.stacknum = self:GetBuffInfo(1)
+	buff2.spell,buff2.secondsLeft,buff2.stacknum = self:GetBuffInfo(2)
+	buff3.spell,buff3.secondsLeft,buff3.stacknum = self:GetBuffInfo(3)
+	buff4.spell,buff4.secondsLeft,buff4.stacknum = self:GetBuffInfo(4)
 	
 	-- Update Buff Text
 	self:UpdateBuffText(buff1)

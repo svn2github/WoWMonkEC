@@ -34,11 +34,6 @@ function MonkEC:InitializeOptions()
 			targetChi = 2,
 			targetEnergy = 75,
 			
-			tracked_buffs_1 = 1,
-			tracked_buffs_2 = 2,
-			tracked_buffs_3 = 3,
-			tracked_buffs_4 = 4,
-					
 			icon_size = 64,
 			icon_size_small = 48,
 			icon_size_tiny = 32,				
@@ -145,6 +140,14 @@ function MonkEC:InitializeOptions()
 						get = function() return MonkEC.db.profile.suggest_guard end,
 						set = function() MonkEC.db.profile.suggest_guard = not MonkEC.db.profile.suggest_guard end,
 					},
+					suggestAoE = {
+						type = "toggle",
+						name = "AoE",
+						desc = "Suggest AoE skills",
+						order = 160,
+						get = function() return MonkEC.db.profile.suggest_aoe end,
+						set = function() MonkEC.db.profile.suggest_aoe = not MonkEC.db.profile.suggest_aoe end,
+					},
 					header3 = {
 						type = "header",
 						name = RESOURCETHRESHOLDS,
@@ -241,60 +244,6 @@ function MonkEC:InitializeOptions()
 						desc = BUFFSYCOORDINATEDESCRIPTION,
 						get = function() return MonkEC.db.profile.buff_y end,
 						set = "SetBuffYCoord",
-					},
-					buffGroup = {
-						type = "group",
-						name = BUFFSDEBUFFS,
-						args = {
-							tracked_buff1 = {
-								type = "select",
-								name = "Buff #1",
-								desc = "Custom Buff #1",
-								order = 255,
-								values = MonkEC.trackableBuffs,
-								get = function() return MonkEC.db.profile.tracked_buffs_1 end,
-								set = function(self, key)	
-												MonkEC.db.profile.tracked_buffs_1 = key
-											end,
-								style = "dropdown",						
-							},
-							tracked_buff2 = {
-								type = "select",
-								name = "Buff #2",
-								desc = "Custom Buff #2",
-								order = 255,
-								values = MonkEC.trackableBuffs,
-								get = function() return MonkEC.db.profile.tracked_buffs_2 end,
-								set = function(self, key)	
-												MonkEC.db.profile.tracked_buffs_2 = key
-											end,
-								style = "dropdown",						
-							},
-							tracked_buff3 = {
-								type = "select",
-								name = "Buff #3",
-								desc = "Custom Buff #3",
-								order = 255,
-								values = MonkEC.trackableBuffs,
-								get = function() return MonkEC.db.profile.tracked_buffs_3 end,
-								set = function(self, key)	
-												MonkEC.db.profile.tracked_buffs_3 = key
-											end,
-								style = "dropdown",						
-							},
-							tracked_buff4 = {
-								type = "select",
-								name = "Buff #4",
-								desc = "Custom Buff #4",
-								order = 255,
-								values = MonkEC.trackableBuffs,
-								get = function() return MonkEC.db.profile.tracked_buffs_4 end,
-								set = function(self, key)	
-												MonkEC.db.profile.tracked_buffs_4 = key
-											end,
-								style = "dropdown",						
-							},					
-						},
 					},
 				},
 			},

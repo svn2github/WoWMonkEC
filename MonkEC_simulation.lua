@@ -176,6 +176,12 @@ function MonkEC:CreatePriorityLists()
 				return UnitExists("target")
 			end, 
 		},
+		{	spell = self.common.blackoutKick, 
+			condition = function(self, characterState) 
+				return UnitExists("target") and 
+						self:DebuffWearingOffSoon(self.common.blackoutKick, characterState)
+			end, 
+		},
 		{	spell = self.common.spinningCraneKick, 
 			condition = function(self, characterState) 
 				return self:DoAOE(characterState)
@@ -266,10 +272,11 @@ end
 function MonkEC:NextGCD(characterState)
 	characterState.energy = characterState.energy + MonkEC.energyGeneratedPerGCD_brewmaster
 	characterState.breathOfFireSecondsLeft = characterState.breathOfFireSecondsLeft - MonkEC.theGCD
-	characterState.risingSunKickSecondsLeft = characterState.risingSunKickSecondsLeft - MonkEC.theGCD
 	characterState.shuffleSecondsLeft = characterState.shuffleSecondsLeft - MonkEC.theGCD
 	characterState.tigerPowerSecondsLeft = characterState.tigerPowerSecondsLeft - MonkEC.theGCD
 	characterState.weakenedBlowsSecondsLeft = characterState.weakenedBlowsSecondsLeft - MonkEC.theGCD
+	characterState.risingSunKickSecondsLeft = characterState.risingSunKickSecondsLeft - MonkEC.theGCD
+	characterState.blackoutKickDebuffSecondsLeft = characterState.blackoutKickDebuffSecondsLeft - MonkEC.theGCD
 end
 
 function MonkEC:ConsumePowerForSpell(spell, characterState)
@@ -309,6 +316,8 @@ function MonkEC:UpdateBuffsForSpell(spell, characterState)
 		characterState.hasComboBreakerBlackoutKick = false
 	elseif spell.id == self.brewmaster.breathOfFire.id then
 		characterState.breathOfFireSecondsLeft = MonkEC.breathOfFireDebuffLength
+	elseif spell.id == self.common.blackoutKick.id then
+		characterState.blackoutKickDebuffSecondsLeft = MonkEC.blackoutKickDebuffLength
 	elseif spell.id == self.windwalker.risingSunKick.id then
 		characterState.risingSunKickSecondsLeft = MonkEC.risingSunKickDebuffLength
 	elseif spell.id == self.common.tigerPalm.id then
@@ -380,10 +389,13 @@ end
 
 function MonkEC:DoAOE(characterState)
 	local doAOE = false;
-	if MonkEC.talentSpec == MonkEC.talentSpecBrewmaster then
-		doAOE = numTargets > 3 -- We're always damaging ourself with stagger
-	elseif MonkEC.talentSpec == MonkEC.talentSpecWindwalker  then
-		doAOE = numTargets > 4
+	
+	if self.db.profile.suggest_aoe == true then
+		if MonkEC.talentSpec == MonkEC.talentSpecBrewmaster then
+			doAOE = numTargets > 3 -- We're always damaging ourself with stagger
+		elseif MonkEC.talentSpec == MonkEC.talentSpecWindwalker  then
+			doAOE = numTargets > 4
+		end
 	end
 	
 	return doAOE
@@ -450,6 +462,10 @@ function MonkEC:DebuffWearingOffBefore(spell, characterState, duration)
 		end
 	elseif spell.id == self.windwalker.risingSunKick.id then
 		if characterState.risingSunKickSecondsLeft > duration then
+			wearingOffBefore = false
+		end
+	elseif spell.id == self.common.blackoutKick.id then
+		if characterState.blackoutKickDebuffSecondsLeft > duration then
 			wearingOffBefore = false
 		end
 	end

@@ -28,7 +28,6 @@ MonkEC.weakenedBlowsDebuffLength = 15
 
 -- Buff info
 local elusiveBrewCount, elusiveBrewSecondsLeft, elusiveBrewSpell
-local sanctuaryOfTheOxCount, sanctuaryOfTheOxSecondsLeft, sanctuaryOfTheOxSpell
 local shuffleCount, shuffleSecondsLeft, shuffleSpell
 local tigerPowerCount, tigerPowerSecondsLeft, tigerPowerSpell
 local tigerEyeCount, tigerEyeSecondsLeft, tigerEyeSpell
@@ -36,6 +35,7 @@ local weakenedBlowsCount,weakenedBlowsSecondsLeft,weakenedBlowsSpell
 
 -- Debuff lengths
 MonkEC.breathOfFireDebuffLength = 8
+MonkEC.blackoutKickDebuffLength = 4
 MonkEC.risingSunKickDebuffLength = 15
 
 -- Debuff info
@@ -130,11 +130,12 @@ MonkEC.buff = {
 	sanctuaryOfTheOx = MonkEC:GetSpellData(126119),
 	shuffle	= MonkEC:GetSpellData(115307),
 	tigerPower = MonkEC:GetSpellData(125359),
-	tigerEye = MonkEC:GetSpellData(125195),
+	tigerEye = MonkEC:GetSpellData(123980),
 }
 
  -- Spell details for Debuffs
 MonkEC.debuff = {
+	blackoutKick = MonkEC:GetSpellData(128531),
 	mortalWounds = MonkEC:GetSpellData(115804),	
 	weakenedBlows = MonkEC:GetSpellData(115798),
 	lightStagger = MonkEC:GetSpellData(124275),
@@ -150,6 +151,8 @@ MonkEC.external = {
 	scarletFever = MonkEC:GetSpellData(81132),
 	thrash = MonkEC:GetSpellData(115800),
 	thunderclap = MonkEC:GetSpellData(115799),
+	
+	-- Buff Equivalents
 	markOfTheWild = MonkEC:GetSpellData(1126),
 	blessingOfKings = MonkEC:GetSpellData(20217),
 	embraceOfTheShaleSpider = MonkEC:GetSpellData(90363),
@@ -275,31 +278,31 @@ function MonkEC:Level90Talent()
 			end
 		end
 	end
-
-	if spell == nil then -- TODO bug workaround
-		spell = MonkEC.talent.zenSphere
-		self:Print("Can't figure out lvl30 spell.  Forcing to " .. spell.name)
-	end
 	
 	return spell
 end
 
 function MonkEC:GetBuffInfo(num)
 	local buffInfo
-	if num == 1 then
-		return weakenedBlowsSpell,weakenedBlowsSecondsLeft,weakenedBlowsCount
-	elseif num == 2 then
-		return shuffleSpell,shuffleSecondsLeft,shuffleCount
-	elseif num == 3 then
-		return elusiveBrewSpell,elusiveBrewSecondsLeft,elusiveBrewCount
-	elseif num == 4 then
-		return tigerPowerSpell,tigerPowerSecondsLeft,tigerPowerCount
-	elseif num == 5 then
-		return sanctuaryOfTheOxSpell,sanctuaryOfTheOxTime,sanctuaryOfTheOxCount
-	elseif num == 6 then
-		return tigerEyeSpell,tigerEyeTime,tigerEyeCount
-	else
-		return mortalWoundsIcon,mortalWoundsSecondsLeft,mortalWoundsCount
+
+	if MonkEC.talentSpec == MonkEC.talentSpecBrewmaster then
+		if num == 1 then
+			return weakenedBlowsSpell,weakenedBlowsSecondsLeft,weakenedBlowsCount
+		elseif num == 2 then
+			return shuffleSpell,shuffleSecondsLeft,shuffleCount
+		elseif num == 3 then
+			return elusiveBrewSpell,elusiveBrewSecondsLeft,elusiveBrewCount
+		elseif num == 4 then
+			return tigerPowerSpell,tigerPowerSecondsLeft,tigerPowerCount
+		end
+	elseif MonkEC.talentSpec == MonkEC.talentSpecWindwalker then
+		if num == 1 then
+			return mortalWoundsIcon,mortalWoundsSecondsLeft,mortalWoundsCount
+		elseif num == 2 then
+			return tigerEyeSpell,tigerEyeSecondsLeft,tigerEyeCount
+		elseif num == 3 then
+			return blackoutKickDebuffSpell,blackoutKickDebuffSecondsLeft,blackoutKickDebuffCount
+		end
 	end
 
 	return buffInfo
@@ -315,6 +318,7 @@ function MonkEC:UpdateTrackedBuffs()
 	local breathOfFireExpirationTime = nil
 	local risingSunKickExpirationTime = nil
 
+	-- Brewmaster
 	_,_,_,weakenedBlowsExpirationCount,_,_,weakenedBlowsExpirationTime,_,_ = UnitDebuff("target", MonkEC.external.earthShock.name)
 	if (weakenedBlowsExpirationTime ~= nil) then
 		weakenedBlowsSpell = MonkEC.external.earthShock
@@ -363,7 +367,7 @@ function MonkEC:UpdateTrackedBuffs()
 		elusiveBrewSecondsLeft = 0
 	end
 	
-	tigerPowerSpell = MonkEC.common.tigerPalm
+	tigerPowerSpell = MonkEC.buff.tigerPower
 	_,_,_,tigerPowerCount,_,_,tigerPowerExpirationTime,_,_ = UnitAura("player", MonkEC.buff.tigerPower.name)
 	if tigerPowerExpirationTime ~= nil then
 		tigerPowerSecondsLeft = tigerPowerExpirationTime - GetTime()
@@ -371,35 +375,36 @@ function MonkEC:UpdateTrackedBuffs()
 		tigerPowerSecondsLeft = 0
 	end
 	
-	tigerEyeSpell = MonkEC.buff.tigerEye
-	_,_,_,tigerEyeCount,_,_,tigerEyeExpirationTime,_,_ = UnitAura("player", MonkEC.buff.tigerEye.name)
+	_,_,_,_,_,_,breathOfFireExpirationTime,_,_ = UnitDebuff("target", MonkEC.brewmaster.breathOfFire.name)
+	if breathOfFireExpirationTime ~= nil then
+		breathOfFireSecondsLeft = breathOfFireExpirationTime - GetTime()
+	else
+		breathOfFireSecondsLeft = 0
+	end
+	
+	-- Windwalker
+	tigerEyeSpell = MonkEC.windwalker.tigerEyeBrew
+	_,_,_,tigerEyeCount,_,_,tigerEyeExpirationTime,_,_ = UnitAura("player", tigerEyeSpell.name)
 	if tigerEyeExpirationTime ~= nil then
 		tigerEyeSecondsLeft = tigerEyeExpirationTime - GetTime()
 	else
 		tigerEyeSecondsLeft = 0
 	end
 	
-	sanctuaryOfTheOxSpell = MonkEC.brewmaster.summonBlackOxStatue
-	_,_,_,sanctuaryOfTheOxCount,_,_,sanctuaryOfTheOxExpirationTime,_,_ = UnitAura("player", MonkEC.buff.sanctuaryOfTheOx.name)
-	if sanctuaryOfTheOxExpirationTime ~= nil then
-		sanctuaryOfTheOxSecondsLeft = sanctuaryOfTheOxExpirationTime - GetTime()
+	blackoutKickDebuffSpell = MonkEC.debuff.blackoutKick
+	_,_,_,blackoutKickDebuffCount,_,_,blackoutKickDebuffExpirationTime,_,_ = UnitDebuff("target", blackoutKickDebuffSpell.name)
+	if blackoutKickDebuffExpirationTime ~= nil then
+		blackoutKickDebuffSecondsLeft = blackoutKickDebuffExpirationTime - GetTime()
 	else
-		sanctuaryOfTheOxSecondsLeft = 0
+		blackoutKickDebuffSecondsLeft = 0
 	end
-	
+		
 	mortalWoundsIcon = MonkEC.debuff.mortalWounds
 	_,_,_,mortalWoundsCount,_,_,mortalWoundsExpirationTime,_,_ = UnitDebuff("target", MonkEC.debuff.mortalWounds.name)
 	if mortalWoundsExpirationTime ~= nil then
 		mortalWoundsSecondsLeft = mortalWoundsExpirationTime - GetTime()
 	else
 		mortalWoundsSecondsLeft = 0
-	end
-	
-	_,_,_,_,_,_,breathOfFireExpirationTime,_,_ = UnitDebuff("target", MonkEC.brewmaster.breathOfFire.name)
-	if breathOfFireExpirationTime ~= nil then
-		breathOfFireSecondsLeft = breathOfFireExpirationTime - GetTime()
-	else
-		breathOfFireSecondsLeft = 0
 	end
 	
 	_,_,_,_,_,_,risingSunKickExpirationTime,_,_ = UnitDebuff("target", MonkEC.windwalker.risingSunKick.name)
@@ -448,6 +453,7 @@ function MonkEC:GatherCharacterState()
 		tigerPowerSecondsLeft = tigerPowerSecondsLeft,
 		breathOfFireSecondsLeft = breathOfFireSecondsLeft,
 		risingSunKickSecondsLeft = risingSunKickSecondsLeft,
+		blackoutKickDebuffSecondsLeft = blackoutKickDebuffSecondsLeft,
 	}
 
 	if state.doAOE == nil then
@@ -484,6 +490,10 @@ function MonkEC:GatherCharacterState()
 	
 	if state.risingSunKickSecondsLeft == nil then
 		state.risingSunKickSecondsLeft = 0
+	end
+	
+	if state.blackoutKickDebuffSecondsLeft == nil then
+		state.blackoutKickDebuffSecondsLeft = 0
 	end
 	
 	return state
