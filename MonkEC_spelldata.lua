@@ -176,6 +176,18 @@ function MonkEC:InspectSpecialization()
 	end
 	
 	MonkEC.haveHealingElixirs = GetSpellBookItemInfo(MonkEC.talent.healingElixirs.name) ~= nil
+
+	if (MonkEC.talentSpec == MonkEC.talentSpecBrewmaster) then
+		MonkEC.cooldownFrame.cooldown[1].spell = MonkEC.brewmaster.avertHarm
+		MonkEC.cooldownFrame.cooldown[2].spell = MonkEC.brewmaster.clash
+		MonkEC.cooldownFrame.cooldown[3].spell = MonkEC.brewmaster.fortifyingBrew
+		MonkEC.cooldownFrame.cooldown[4].spell = MonkEC.brewmaster.guard
+	elseif (MonkEC.talentSpec == MonkEC.talentSpecWindwalker) then
+		MonkEC.cooldownFrame.cooldown[1].spell = MonkEC.windwalker.energizingBrew
+		MonkEC.cooldownFrame.cooldown[2].spell = MonkEC.windwalker.fistsOfFury
+		MonkEC.cooldownFrame.cooldown[3].spell = MonkEC:Level90Talent()
+		MonkEC.cooldownFrame.cooldown[4].spell = MonkEC:Level30Talent()
+	end	
 end
 
 function MonkEC:SetChiGeneration()
@@ -302,6 +314,8 @@ function MonkEC:GetBuffInfo(num)
 			return tigerEyeSpell,tigerEyeSecondsLeft,tigerEyeCount
 		elseif num == 3 then
 			return blackoutKickDebuffSpell,blackoutKickDebuffSecondsLeft,blackoutKickDebuffCount
+		elseif num == 4 then
+			return tigerPowerSpell,tigerPowerSecondsLeft,tigerPowerCount
 		end
 	end
 

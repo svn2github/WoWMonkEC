@@ -8,6 +8,8 @@ local abilityIconXOffset = { [1] = 8, [2] = 80, [3] = 136 }
 local abilityIconYOffset = 8
 local buffIconXOffset = { [1] = 13, [2] = 57, [3] = 101, [4] = 145 }
 local buffIconYOffset = 8
+local cooldownIconXOffset = { [1] = 13, [2] = 57, [3] = 101, [4] = 145 }
+local cooldownIconYOffset = 8
 
 local timeSinceLastUpdate = 0
 local updateFrequency = 0.1
@@ -43,6 +45,7 @@ end
 function MonkEC:InitializeFrames()
 	self:InitAbilityFrame()
 	self:InitBuffFrame()
+	self:InitCooldownFrame()
 end
 
 function MonkEC:InitAbilityFrame()
@@ -113,15 +116,17 @@ function MonkEC:InitBuffFrame()
 	self.buffFrame = buffFrame
 	
 	-- Create individual buff/debuffs
-	buffFrame.buff1 = self:CreateBuffFrame("MonkECBuffsBuff1", buffFrame, 
-			self.debuff.weakenedBlows, buffIconXOffset[1], buffIconYOffset, iconSize, scale)
-	buffFrame.buff2 = self:CreateBuffFrame("MonkECBuffsBuff2", buffFrame, 
-			self.buff.shuffle, buffIconXOffset[2], buffIconYOffset, iconSize, scale)
-	buffFrame.buff3 = self:CreateBuffFrame("MonkECBuffsBuff3", buffFrame, 
-			self.brewmaster.dizzyingHaze, buffIconXOffset[3], buffIconYOffset, iconSize, scale)
-	buffFrame.buff4 = self:CreateBuffFrame("MonkECBuffsBuff4", buffFrame, 
-			self.debuff.mortalWounds, buffIconXOffset[4], buffIconYOffset, iconSize, scale)
-
+	buffFrame.buff = {
+		self:CreateBuffFrame("MonkECBuffsBuff1", buffFrame, 
+			self.debuff.weakenedBlows, buffIconXOffset[1], buffIconYOffset, iconSize, scale),
+		self:CreateBuffFrame("MonkECBuffsBuff2", buffFrame, 
+			self.buff.shuffle, buffIconXOffset[2], buffIconYOffset, iconSize, scale),
+		self:CreateBuffFrame("MonkECBuffsBuff3", buffFrame, 
+			self.brewmaster.dizzyingHaze, buffIconXOffset[3], buffIconYOffset, iconSize, scale),
+		self:CreateBuffFrame("MonkECBuffsBuff4", buffFrame, 
+			self.debuff.mortalWounds, buffIconXOffset[4], buffIconYOffset, iconSize, scale),
+	}
+	
 	-- Set Frame Strata and load background
 	buffFrame:SetFrameStrata("BACKGROUND")
 	buffFrame:SetWidth(self.db.profile.buff_width * scale)
@@ -160,6 +165,68 @@ function MonkEC:InitBuffFrame()
 		buffFrame:EnableMouse(false)
 	else
 		buffFrame:EnableMouse(true)
+	end
+
+	MonkEC.buffFrame:SetScript("OnUpdate", OnUpdate)
+end
+
+function MonkEC:InitCooldownFrame()
+	local cooldownFrame = CreateFrame("Frame", "MonkECCooldownFrame", UIParent)
+
+	local iconSize = self.db.profile.icon_size_tiny
+	local scale = self.db.profile.cooldowns_scale
+
+	self.cooldownFrame = cooldownFrame
+	
+	cooldownFrame.cooldown = {
+		self:CreateAbilityFrame("MonkECCooldownsCooldown1", cooldownFrame, 
+			self.common.blackoutKick, cooldownIconXOffset[1], cooldownIconYOffset, iconSize, scale),
+		self:CreateAbilityFrame("MonkECCooldownsCooldown2", cooldownFrame, 
+			self.common.blackoutKick, cooldownIconXOffset[2], cooldownIconYOffset, iconSize, scale),
+		self:CreateAbilityFrame("MonkECCooldownsCooldown3", cooldownFrame, 
+			self.common.blackoutKick, cooldownIconXOffset[3], cooldownIconYOffset, iconSize, scale),
+		self:CreateAbilityFrame("MonkECCooldownsCooldown4", cooldownFrame, 
+			self.common.blackoutKick, cooldownIconXOffset[4], cooldownIconYOffset, iconSize, scale),
+	}
+
+	-- Set Frame Strata and load background
+	cooldownFrame:SetFrameStrata("BACKGROUND")
+	cooldownFrame:SetWidth(self.db.profile.cooldowns_width * scale)
+	cooldownFrame:SetHeight(self.db.profile.cooldowns_height * scale)
+
+	-- Set the Backdrop
+	cooldownFrame:SetBackdrop({
+		bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+		edgeFile = nil,
+		tile = true, tileSize = 4, edgeSize = 0,
+		insets = { left = 1, right = 1, top = 1, bottom = 1 }
+	})
+	if (self.db.profile.isLocked == true) then
+		cooldownFrame:SetBackdropColor(0, 0, 0, 0)
+	else
+		cooldownFrame:SetBackdropColor(0, 0, 0, 0.7)
+	end
+
+	-- Setup the Cooldowns Frame
+	cooldownFrame:ClearAllPoints()
+	cooldownFrame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", self.db.profile.cooldowns_x, self.db.profile.cooldowns_y)
+	cooldownFrame:EnableMouse(true)
+	cooldownFrame:SetMovable(true)
+	cooldownFrame:SetClampedToScreen(true)
+	cooldownFrame:RegisterForDrag("LeftButton")
+	cooldownFrame:SetScript("OnDragStart", function()
+		cooldownFrame:StartMoving()
+	end) 
+	cooldownFrame:SetScript("OnDragStop", function()
+		cooldownFrame:StopMovingOrSizing()
+		self.db.profile.cooldowns_x = cooldownFrame:GetLeft()
+		self.db.profile.cooldowns_y = cooldownFrame:GetTop()
+	end)	
+	
+	if (self.db.profile.isLocked == true) then
+		cooldownFrame:EnableMouse(false)
+	else
+		cooldownFrame:EnableMouse(true)
 	end
 end
 
@@ -226,6 +293,7 @@ function MonkEC:UpdateFrameVisibility()
 			if not self.db.profile.showOnlyIC or inCombat then
 				showAbilityFrame = self.db.profile.enabled
 				showBuffFrame = self.db.profile.buff_isShown
+				showCooldownFrame = self.db.profile.cooldowns_isShown
 			end
 		end
 	end
@@ -247,6 +315,16 @@ function MonkEC:UpdateFrameVisibility()
 	else
 		if self.buffFrame:IsShown() then
 			self.buffFrame:Hide()
+		end
+	end
+				
+	if showCooldownFrame then
+		if not self.cooldownFrame:IsShown() then
+			self.cooldownFrame:Show()
+		end
+	else
+		if self.cooldownFrame:IsShown() then
+			self.cooldownFrame:Hide()
 		end
 	end
 end
@@ -290,6 +368,15 @@ function MonkEC:SetBuffScale(info, value)
 	end
 end
 
+function MonkEC:SetCooldownsScale(info, value)
+	if (tonumber(value) > 1.5 or tonumber(value) < 0.5) then
+		self:Print(BADSCALEVALUE .. " (0.5-1.5)")
+	else
+		self.db.profile.cooldowns_scale = value
+		self:ScaleCooldownFrame()
+	end
+end
+
 function MonkEC:ScaleSpell(spell, parentFrame, xOffset, yOffset, iconSize, scale)
 	local scaledIconSize = iconSize * scale
 	local scaledXOffset = xOffset * scale
@@ -311,10 +398,9 @@ function MonkEC:ScaleBuffFrame()
 	buffFrame:SetWidth(self.db.profile.buff_width * buffScale)
 	buffFrame:SetHeight(self.db.profile.buff_height * buffScale) 
 	
-	self:ScaleBuff(buffFrame.buff1, buffFrame, buffIconXOffset[1], buffIconYOffset, buffSize, buffScale)
-	self:ScaleBuff(buffFrame.buff2, buffFrame, buffIconXOffset[2], buffIconYOffset, buffSize, buffScale)
-	self:ScaleBuff(buffFrame.buff3, buffFrame, buffIconXOffset[3], buffIconYOffset, buffSize, buffScale)
-	self:ScaleBuff(buffFrame.buff4, buffFrame, buffIconXOffset[4], buffIconYOffset, buffSize, buffScale)
+	for i = 1,4 do
+		self:ScaleBuff(buffFrame.buff[i], buffFrame, buffIconXOffset[i], buffIconYOffset, buffSize, buffScale)
+	end
 end
 
 function MonkEC:ScaleBuff(buff, parentFrame, xOffset, yOffset, iconSize, scale)
@@ -323,6 +409,20 @@ function MonkEC:ScaleBuff(buff, parentFrame, xOffset, yOffset, iconSize, scale)
 	buff.secondsLeftText:SetFont("Fonts\\FRIZQT__.TTFa", 12 * scale, "OUTLINE")
 	buff.stackCountText:SetFont("Fonts\\FRIZQT__.TTFa", 10 * scale, "OUTLINE")
 end
+
+function MonkEC:ScaleCooldownFrame()
+	local spellSize = self.db.profile.icon_size_tiny;
+	local spellScale = self.db.profile.cooldowns_scale;
+	local frame = self.cooldownFrame
+	
+	frame:SetWidth(self.db.profile.cooldowns_width * spellScale)
+	frame:SetHeight(self.db.profile.cooldowns_height * spellScale) 
+	
+	for i = 1,4 do
+		self:ScaleSpell(frame.cooldown[i], frame, cooldownIconXOffset[i], cooldownIconYOffset, spellSize, spellScale)
+	end
+end
+
 
 ------------------------------------
 -- Refresh icons in the DPS queue
@@ -335,13 +435,21 @@ function MonkEC:RefreshTextures()
 			self.frame.abilityFrame[i].icon:SetTexture(self.frame.abilityFrame[i].spell.icon)
 		end
 	end
-	self.buffFrame.buff1.icon:SetTexture(self.buffFrame.buff1.spell.icon)
-	self.buffFrame.buff2.icon:SetTexture(self.buffFrame.buff2.spell.icon)
-	self.buffFrame.buff3.icon:SetTexture(self.buffFrame.buff3.spell.icon)
-	if self.buffFrame.buff4.spell == nil then
-		self.buffFrame.buff4.icon:SetTexture(nil)
-	else
-		self.buffFrame.buff4.icon:SetTexture(self.buffFrame.buff4.spell.icon)
+	
+	for i = 1,4 do
+		if self.buffFrame.buff[i].spell == nil then
+			self.buffFrame.buff[i].icon:SetTexture(nil)
+		else
+			self.buffFrame.buff[i].icon:SetTexture(self.buffFrame.buff[i].spell.icon)
+		end
+	end
+	
+	for i = 1,4 do
+		if self.cooldownFrame.cooldown[i].spell == nil then
+			self.cooldownFrame.cooldown[i].icon:SetTexture(nil)
+		else
+			self.cooldownFrame.cooldown[i].icon:SetTexture(self.cooldownFrame.cooldown[i].spell.icon)
+		end
 	end
 end
 
@@ -360,6 +468,20 @@ function MonkEC:UpdateCDs()
 			end
 		end
 	end
+	
+	for i = 1,4 do
+		local spellFrame = self.cooldownFrame.cooldown[i]
+		
+		if spellFrame.spell ~= nil then
+			local start, duration = GetSpellCooldown(spellFrame.spell.id)
+			if duration and duration > 0 and inCombat == true and spellFrame:IsShown() ~= nil then
+				spellFrame.cooldownFrame:SetCooldown(start, duration)
+				spellFrame.cooldownFrame:Show()
+			else
+				spellFrame.cooldownFrame:Hide()
+			end
+		end
+	end
 end
 
 -------------------------------------
@@ -367,22 +489,15 @@ end
 -- change opacities based on them
 -------------------------------------
 function MonkEC:UpdateBuffFrame()
-	local buff1 = self.buffFrame.buff1
-	local buff2 = self.buffFrame.buff2
-	local buff3 = self.buffFrame.buff3
-	local buff4 = self.buffFrame.buff4
+	for i = 1,4 do
+		local buff = self.buffFrame.buff[i]
 
-	-- Update buff icons
-	buff1.spell,buff1.secondsLeft,buff1.stacknum = self:GetBuffInfo(1)
-	buff2.spell,buff2.secondsLeft,buff2.stacknum = self:GetBuffInfo(2)
-	buff3.spell,buff3.secondsLeft,buff3.stacknum = self:GetBuffInfo(3)
-	buff4.spell,buff4.secondsLeft,buff4.stacknum = self:GetBuffInfo(4)
+		-- Update buff icon
+		buff.spell,buff.secondsLeft,buff.stacknum = self:GetBuffInfo(i)
 	
-	-- Update Buff Text
-	self:UpdateBuffText(buff1)
-	self:UpdateBuffText(buff2)
-	self:UpdateBuffText(buff3)
-	self:UpdateBuffText(buff4)
+		-- Update buff Text
+		self:UpdateBuffText(buff)
+	end
 end
 
 function MonkEC:UpdateBuffText(buffFrame)
@@ -450,6 +565,22 @@ function MonkEC:SetBuffYCoord(info, value)
 	end
 end
 
+function MonkEC:SetCooldownsXCoord(info, value)
+	if (self.db.profile.isLocked == false) then
+		self.db.profile.cooldowns_x = value
+		self.cooldownFrame:ClearAllPoints()
+		self.cooldownFrame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", self.db.profile.cooldowns_x, self.db.profile.cooldowns_y)
+	end
+end
+
+function MonkEC:SetCooldownsYCoord(info, value)
+	if (self.db.profile.isLocked == false) then
+		self.db.profile.cooldowns_y = value
+		self.cooldownFrame:ClearAllPoints()
+		self.cooldownFrame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", self.db.profile.cooldowns_x, self.db.profile.cooldowns_y)
+	end
+end
+
 ----------------------------------------
 -- Toggling of MonkEC/Buffs Locking
 ---------------------------------------
@@ -461,11 +592,15 @@ function MonkEC:SetLocked(info, newLockedValue)
 			self.frame:SetBackdropColor(0, 0, 0, 0)
 			self.buffFrame:EnableMouse(false)
 			self.buffFrame:SetBackdropColor(0, 0, 0, 0)
+			self.cooldownFrame:EnableMouse(false)
+			self.cooldownFrame:SetBackdropColor(0, 0, 0, 0)
 	else
 			self.frame:EnableMouse(true)
 			self.frame:SetBackdropColor(0, 0, 0, 0.7)
 			self.buffFrame:EnableMouse(true)
 			self.buffFrame:SetBackdropColor(0, 0, 0, 0.7)
+			self.cooldownFrame:EnableMouse(true)
+			self.cooldownFrame:SetBackdropColor(0, 0, 0, 0.7)
 	end
 	
 	self:UpdateFrameVisibility()

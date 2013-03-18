@@ -24,6 +24,13 @@ function MonkEC:InitializeOptions()
 			buff_height = 50,
 			buff_scale = 1.0,
 			buff_isShown = true,
+		
+			cooldowns_x = 400,
+			cooldowns_y = 300,
+			cooldowns_width = 190,
+			cooldowns_height = 50,
+			cooldowns_scale = 1.0,
+			cooldowns_isShown = true,
 
 			suggest_guard = false,
 			suggest_touchOfDeath = false,
@@ -209,7 +216,7 @@ function MonkEC:InitializeOptions()
 						name = BUFFSDEBUFFSFRAMEHEADER,
 						order = 205,
 					},					 
-					toggleProt = {
+					toggleBuffs = {
 						type = "toggle",
 						name = ENABLE,
 						order = 212,
@@ -244,6 +251,54 @@ function MonkEC:InitializeOptions()
 						desc = BUFFSYCOORDINATEDESCRIPTION,
 						get = function() return MonkEC.db.profile.buff_y end,
 						set = "SetBuffYCoord",
+					},
+				},
+			},
+			cooldowns = {
+				type = "group",
+				name = "Cooldowns",
+				order = 200,
+				args = {
+					header = {
+						type = "header",
+						name = "Cooldowns",
+						order = 205,
+					},					 
+					toggleCooldowns = {
+						type = "toggle",
+						name = ENABLE,
+						order = 212,
+						get = function() return MonkEC.db.profile.cooldowns_isShown end,
+						set = function(self, key) 
+										MonkEC.db.profile.cooldowns_isShown = key
+										MonkEC:UpdateFrameVisibility() end,
+					},					
+					scale = {
+						type = "range",
+						name = SCALE,
+						order = 220,
+						min = 0.5,
+						max = 1.5,
+						step = 0.1,
+						desc = "Cooldowns Scaling",		
+						get = function() return MonkEC.db.profile.cooldowns_scale end,
+						set = "SetCooldownsScale",
+					},
+					posx = {
+						type = "input",
+						name = XCOORDINATE,
+						order = 230,
+						desc = "Cooldowns X Coordinate",
+						get = function() return MonkEC.db.profile.cooldowns_x end,
+						set = "SetCooldownsXCoord",
+					},
+					posy = {
+						type = "input",
+						name = YCOORDINATE,
+						order = 240,
+						desc = "Cooldowns Y Coordinate",
+						get = function() return MonkEC.db.profile.cooldowns_y end,
+						set = "SetCooldownsYCoord",
 					},
 				},
 			},

@@ -14,23 +14,38 @@ local numTargets = 0
 local trackedTargets = {}
 
 function MonkEC:CreatePriorityLists()
-	desperationPriorities = {
-		{	spell = self.brewmaster.guard, condition = nil, },
-		{	spell = self.brewmaster.fortifyingBrew, condition = nil, },
-		{	spell = self.brewmaster.dampenHarm, condition = nil, },
+	brewmasterPriorities = {
+		{	spell = self.brewmaster.guard, 
+			condition = function(self, characterState) 
+				return self:InDesperateNeedOfHealing(characterState)
+			end, 
+		},
+		{	spell = self.brewmaster.fortifyingBrew, 
+			condition = function(self, characterState) 
+				return self:InDesperateNeedOfHealing(characterState)
+			end, 
+		},
+		{	spell = self.brewmaster.dampenHarm, 
+			condition = function(self, characterState) 
+				return self:InDesperateNeedOfHealing(characterState)
+			end, 
+		},
 		{	spell = self.brewmaster.purifyingBrew, 
 			condition = function(self, characterState) 
 				return self:HaveHealingElixirs(characterState) and
 					self:StaggerTooHigh(characterState)
 			end, 
 		},
-		{	spell = self:Level30Talent(), condition = nil, },
-		{	spell = self.common.expelHarm, condition = nil, },
-		{	spell = self.brewmaster.kegSmash, condition = nil, },
-		{	spell = self.common.jab, condition = nil, },
-	}
-	
-	brewmasterPriorities = {
+		{	spell = self:Level30Talent(), 
+			condition = function(self, characterState) 
+				return self:InDesperateNeedOfHealing(characterState)
+			end, 
+		},
+		{	spell = self.common.expelHarm, 
+			condition = function(self, characterState) 
+				return self:InDesperateNeedOfHealing(characterState)
+			end, 
+		},
 		{	spell = self.common.touchOfDeath, 
 			condition = function(self, characterState) 
 				return (self.db.profile.suggest_touchOfDeath == true) and
@@ -45,7 +60,7 @@ function MonkEC:CreatePriorityLists()
 		},
 		{	spell = self.brewmaster.stanceOfTheSturdyOx, 
 			condition = function(self, characterState) 
-				return self:StanceIsWrong(characterState); 
+				return self:StanceIsWrong(characterState)
 			end, 
 		},
 		{	spell = self.brewmaster.summonBlackOxStatue, 
@@ -167,8 +182,8 @@ function MonkEC:CreatePriorityLists()
 		},
 		{	spell = self.common.tigerPalm, 
 			condition = function(self, characterState) 
-				return UnitExists("target") and 
-					not self:PlayerHasBuff(self.buff.tigerPower, characterState)
+				return UnitExists("target") and
+						MonkEC:BuffWearingOffSoon(self.buff.tigerPower, characterState)
 			end, 
 		},
 		{	spell = self.windwalker.risingSunKick, 
@@ -238,23 +253,17 @@ function MonkEC:CreatePriorityLists()
 end
 
 function MonkEC:FindNextSpell(currentGCD, characterState)
+	local priorities
 	local spell = nil
 	
 	if MonkEC.talentSpec == MonkEC.talentSpecBrewmaster then
-		if self:InDesperateNeedOfHealing(characterState) then
-			spell = self:FindNextSpellFrom(desperationPriorities, currentGCD, characterState)
-		else
-			spell = self:FindNextSpellFrom(brewmasterPriorities, currentGCD, characterState)
-		end
+		priorities = brewmasterPriorities
 	else
-		spell = self:FindNextSpellFrom(windwalkerPriorities, currentGCD, characterState)
+		priorities = windwalkerPriorities
 	end
 
+	spell = self:FindNextSpellFrom(priorities, currentGCD, characterState)
 	if spell ~= nil then
-		if spell.id == self.talent.zenSphere.id then
-			spell = self:Level30Talent()
-		end
-		
 		self:UpdateStateForSpellcast(spell, characterState)
 	end
 
@@ -419,16 +428,16 @@ function MonkEC:BuffWearingOffBefore(spell, characterState, duration)
 	local wearingOffBefore = true
 	
 	if spell.id == self.buff.shuffle.id then
-		if characterState.shuffleSecondsLeft > MonkEC.theGCD or characterState.level < 72 then
-			wearingOffSoon = false
+		if characterState.shuffleSecondsLeft > duration or characterState.level < 72 then
+			wearingOffBefore = false
 		end
 	elseif spell.id == self.buff.tigerPower.id then
 		if characterState.tigerPowerSecondsLeft > duration then
-			wearingOffSoon = false
+			wearingOffBefore = false
 		end
 	end
 	
-	return wearingOffSoon
+	return wearingOffBefore
 end
 
 function MonkEC:BuffStackedTo(spell, targetStackSize, characterState)
