@@ -241,11 +241,6 @@ end
 function MonkEC:Level30Talent()
 	local spell = nil
 	
-	-- for i = 1,18 do
-		-- local name, texture, tier, column, selected, available = GetTalentInfo(i)
-		-- self:Print("GetTalentInfo " .. i .. " name " .. tostring(name) .. " selected=" .. tostring(selected))
-	-- end
-	
 	local name,_,_,_,selected,_ = GetTalentInfo(6)
 	if selected then
 		spell = MonkEC.talent.chiBurst

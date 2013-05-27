@@ -36,7 +36,7 @@ function MonkEC:CreatePriorityLists()
 					self:StaggerTooHigh(characterState)
 			end, 
 		},
-		{	spell = self:Level30Talent(), 
+		{	spell = function(self) return self:Level30Talent() end, 
 			condition = function(self, characterState) 
 				return self:InDesperateNeedOfHealing(characterState)
 			end, 
@@ -136,7 +136,7 @@ function MonkEC:CreatePriorityLists()
 		},
 		{	spell = self.brewmaster.guard, 
 			condition = function(self, characterState) return (self.db.profile.suggest_guard == true) end, },
-		{	spell = self:Level30Talent(), 
+		{	spell = function(self) return self:Level30Talent() end, 
 			condition = function(self, characterState) return self:DamagedEnough(characterState) end, },
 		{	spell = self.common.tigerPalm, 
 			condition = function(self, characterState) 
@@ -207,6 +207,11 @@ function MonkEC:CreatePriorityLists()
 				return UnitExists("target") and
 						self:EnergyHigh(characterState) and
 						self:DamagedEnough(characterState)
+			end, 
+		},
+		{	spell = function(self) return self:Level30Talent() end, 
+			condition = function(self, characterState) 
+				return self:DamagedEnough(characterState)
 			end, 
 		},
 		{	spell = self.windwalker.tigerEyeBrew, 
@@ -491,11 +496,19 @@ function MonkEC:DumpChi(characterState)
 end
 
 function MonkEC:FindNextSpellFrom(priorities, currentGCD, characterState)
+	local spell = nil
+	
 	for key,candidate in pairs(priorities) do
 		if candidate.spell ~= nil and
-			(candidate.condition == nil or candidate.condition(self, characterState)) and
-			self:CanPerformSpell(candidate.spell, currentGCD, characterState) then
-			return candidate.spell
+			(candidate.condition == nil or candidate.condition(self, characterState)) then
+			if type(candidate.spell) == "function" then
+				spell = candidate.spell(self)
+			else
+				spell = candidate.spell
+			end
+			if self:CanPerformSpell(spell, currentGCD, characterState) then
+				return spell
+			end
 		end
 	end
 	
