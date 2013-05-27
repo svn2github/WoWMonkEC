@@ -432,6 +432,7 @@ function MonkEC:GatherCharacterState()
 	playerHasCritBoost = UnitBuff("player", self.buff.legacyOfTheWhiteTiger.name) ~= nil or
 		UnitBuff("player", self.external.leaderOfThePack.name) ~= nil or
 		UnitBuff("player", self.external.arcaneBrilliance.name) ~= nil or
+		UnitBuff("player", self.external.dalaranBrilliance.name) ~= nil or
 		UnitBuff("player", self.external.furiousHowl.name) ~= nil or
 		UnitBuff("player", self.external.terrifyingRoar.name) ~= nil or
 		UnitBuff("player", self.external.fearlessRoar.name) ~= nil or
