@@ -206,8 +206,10 @@ function MonkEC:SetMinimumLevel()
 	self.common.spearHandStrike.minimumLevel = 32
 	self.common.spinningCraneKick.minimumLevel = 46
 	self.brewmaster.elusiveBrew.minimumLevel = 56
+	self.windwalker.risingSunKick.minimumLevel = 56
 	self.brewmaster.summonBlackOxStatue.minimumLevel = 70
 	self.brewmaster.purifyingBrew.minimumLevel = 75
+	self.windwalker.legacyOfTheWhiteTiger.minimumLevel = 81
 end
 
 function MonkEC:SetSpellCooldowns()

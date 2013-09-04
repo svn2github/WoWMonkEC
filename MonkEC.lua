@@ -11,7 +11,6 @@ local fonts = media:List("font")
 -- On Initialized, Enable and Disable Methods
 ---------------------------------------------
 function MonkEC:OnInitialize()
-MonkEC:Print("OnInitialize")
 	MonkEC:InitializeOptions()
 	
 	MonkEC:SetChiGeneration()
@@ -31,7 +30,6 @@ MonkEC:Print("OnInitialize")
 end
  
 function MonkEC:OnEnable()
-MonkEC:Print("OnEnable")
 	MonkEC:InspectSpecialization()
 end
 
