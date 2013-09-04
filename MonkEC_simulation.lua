@@ -38,7 +38,8 @@ function MonkEC:CreatePriorityLists()
 		},
 		{	spell = function(self) return self:Level30Talent() end, 
 			condition = function(self, characterState) 
-				return self:InDesperateNeedOfHealing(characterState)
+				return UnitLevel("player") >= 30 and
+					self:InDesperateNeedOfHealing(characterState)					
 			end, 
 		},
 		{	spell = self.common.expelHarm, 
@@ -137,7 +138,11 @@ function MonkEC:CreatePriorityLists()
 		{	spell = self.brewmaster.guard, 
 			condition = function(self, characterState) return (self.db.profile.suggest_guard == true) end, },
 		{	spell = function(self) return self:Level30Talent() end, 
-			condition = function(self, characterState) return self:DamagedEnough(characterState) end, },
+			condition = function(self, characterState) 
+				return UnitLevel("player") >= 30 and
+					self:DamagedEnough(characterState) 
+			end, 
+		},
 		{	spell = self.common.tigerPalm, 
 			condition = function(self, characterState) 
 				return UnitExists("target")
@@ -523,7 +528,7 @@ function MonkEC:CanPerformSpell(spell, currentGCD, characterState)
 end
 
 function MonkEC:IsHighEnoughLevel(spell, characterState)
-	return spell.minimumLevel == nil or spell.minimumLevel <= characterState.level
+	return spell ~= nil and (spell.minimumLevel == nil or spell.minimumLevel <= characterState.level)
 end
 
 function MonkEC:HasEnoughResources(spell, characterState)

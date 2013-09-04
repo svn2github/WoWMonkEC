@@ -57,7 +57,6 @@ MonkEC.common = {
 	pathOfBlossoms = MonkEC:GetSpellData(124336),
 	spearHandStrike = MonkEC:GetSpellData(116705),
 	spinningCraneKick = MonkEC:GetSpellData(101546),
-	spinningFireBlossom = MonkEC:GetSpellData(115073),
 	tigerPalm = MonkEC:GetSpellData(100787),
 	touchOfDeath = MonkEC:GetSpellData(115080),
 	zenMeditation = MonkEC:GetSpellData(115176),
@@ -199,12 +198,15 @@ function MonkEC:SetChiGeneration()
 end
 
 function MonkEC:SetMinimumLevel()
+	self.windwalker.flyingSerpentKick.minimumLevel = 18
 	self.common.legacyOfTheEmperor.minimumLevel = 22
 	self.common.touchOfDeath.minimumLevel = 22
 	self.brewmaster.fortifyingBrew.minimumLevel = 24
 	self.common.expelHarm.minimumLevel = 26
 	self.common.spearHandStrike.minimumLevel = 32
+	self.windwalker.energizingBrew.minimumLevel = 36
 	self.common.spinningCraneKick.minimumLevel = 46
+	self.windwalker.spinningFireBlossom.minimumLevel = 48
 	self.brewmaster.elusiveBrew.minimumLevel = 56
 	self.windwalker.risingSunKick.minimumLevel = 56
 	self.brewmaster.summonBlackOxStatue.minimumLevel = 70
@@ -243,24 +245,26 @@ end
 function MonkEC:Level30Talent()
 	local spell = nil
 	
-	local name,_,_,_,selected,_ = GetTalentInfo(6)
-	if selected then
-		spell = MonkEC.talent.chiBurst
-	else
-		name,_,_,_,selected,_ = GetTalentInfo(4)
+	if UnitLevel("player") >= 30 then
+		local name,_,_,_,selected,_ = GetTalentInfo(6)
 		if selected then
-			spell = MonkEC.talent.chiWave
+			spell = MonkEC.talent.chiBurst
 		else
-			name,_,_,_,selected,_ = GetTalentInfo(5)
+			name,_,_,_,selected,_ = GetTalentInfo(4)
 			if selected then
-				spell = MonkEC.talent.zenSphere
+				spell = MonkEC.talent.chiWave
+			else
+				name,_,_,_,selected,_ = GetTalentInfo(5)
+				if selected then
+					spell = MonkEC.talent.zenSphere
+				end
 			end
 		end
-	end
 
-	if spell == nil then -- TODO bug workaround
-		spell = MonkEC.talent.zenSphere
-		self:Print("Can't figure out lvl30 spell.  Forcing to " .. spell.name)
+		if spell == nil then -- TODO bug workaround
+			spell = MonkEC.talent.zenSphere
+			self:Print("Can't figure out lvl30 spell.  Forcing to " .. spell.name)
+		end
 	end
 	
 	return spell

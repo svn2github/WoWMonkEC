@@ -32,7 +32,7 @@ SELECTSPEC = "All frames hidden until a spec is chosen."
 SHOWONLYINCOMBAT = "Show only in Combat"
 SHOWONLYINCOMBATDESCRIPTION = "Toggles showing the frames only while in combat"
 SHUFFLE = "Shuffle"
-STARTUPMESSAGE = "MonkEC 1.2.2 loaded. Please type /monkec config for the configuration GUI"
+STARTUPMESSAGE = "MonkEC 1.2.4 loaded. Please type /monkec config for the configuration GUI"
 SUMMONSTATUECHECKBOXDESCRIPTION = "Will suggest using Summon Black Ox Statue."
 TARGETCHI = "Target Chi"
 TARGETCHIDESCRIPTION = "Sets the amount of chi that MonkEC will try to maintain"
@@ -144,7 +144,7 @@ SHOWONLYINCOMBATDESCRIPTION = "Aktiviert wird euch MonkEC nur im Kampf angezeigt
 -- Needs review
 SHUFFLE = "Beinarbeit"
 
-STARTUPMESSAGE = "MonkEC 1.2.2 geladen. Bitte gib /monkec f\195\188r das Konfigurationsfenster ein"
+STARTUPMESSAGE = "MonkEC 1.2.4 geladen. Bitte gib /monkec f\195\188r das Konfigurationsfenster ein"
 
 -- Needs review
 SUMMONSTATUECHECKBOXDESCRIPTION = "Schl\195\164gt die Benutzung von \"Statue des schwarzen Ochsen beschw\195\182ren\" vor"
@@ -286,7 +286,7 @@ SHOWONLYINCOMBATDESCRIPTION = "Configure l'affichage en combat uniquement"
 SHUFFLE = "Virevolte"
 
 -- Needs review
-STARTUPMESSAGE = "MonkEC 1.2.2 charg\195\169. Taper /monkec config pour entrer dans le panneau de configuration"
+STARTUPMESSAGE = "MonkEC 1.2.4 charg\195\169. Taper /monkec config pour entrer dans le panneau de configuration"
 
 -- Needs review
 SUMMONSTATUECHECKBOXDESCRIPTION = "Sugg\195\168re l'utilisation d'Invocation d\226\128\153une statue du Buffle noir"
@@ -429,7 +429,7 @@ SHOWONLYINCOMBATDESCRIPTION = "\208\159\208\181\209\128\208\181\208\186\208\187\
 -- SHUFFLE = ""
 
 -- Needs review
-STARTUPMESSAGE = "MonkEC 1.2.2 \208\183\208\176\208\179\209\128\209\131\208\182\208\181\208\189. \208\157\208\176\208\177\208\181\209\128\208\184\209\130\208\181 /monkec config \208\180\208\187\209\143 \208\189\208\176\209\129\209\130\209\128\208\190\208\185\208\186\208\184 \208\184\208\189\209\130\208\181\209\128\209\132\208\181\208\185\209\129\208\176"
+STARTUPMESSAGE = "MonkEC 1.2.4 \208\183\208\176\208\179\209\128\209\131\208\182\208\181\208\189. \208\157\208\176\208\177\208\181\209\128\208\184\209\130\208\181 /monkec config \208\180\208\187\209\143 \208\189\208\176\209\129\209\130\209\128\208\190\208\185\208\186\208\184 \208\184\208\189\209\130\208\181\209\128\209\132\208\181\208\185\209\129\208\176"
 
 -- Needs review
 SUMMONSTATUECHECKBOXDESCRIPTION = "\208\159\209\128\208\181\208\180\208\191\208\190\208\187\208\176\208\179\208\176\209\130\209\140 \208\184\209\129\208\191\208\190\208\187\209\140\208\183\208\190\208\178\208\176\208\189\208\184\208\181 \208\159\209\128\208\184\208\183\209\139\208\178\208\176 \209\129\209\130\208\176\209\130\209\131\208\184 \209\135\208\181\209\128\208\189\208\190\208\179\208\190 \208\177\209\139\208\186\208\176"
