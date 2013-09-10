@@ -198,10 +198,12 @@ function MonkEC:SetChiGeneration()
 end
 
 function MonkEC:SetMinimumLevel()
+	self.brewmaster.breathOfFire.minimumLevel = 18
 	self.windwalker.flyingSerpentKick.minimumLevel = 18
 	self.common.legacyOfTheEmperor.minimumLevel = 22
 	self.common.touchOfDeath.minimumLevel = 22
 	self.brewmaster.fortifyingBrew.minimumLevel = 24
+	self.brewmaster.guard.minimumLevel = 26
 	self.common.expelHarm.minimumLevel = 26
 	self.common.spearHandStrike.minimumLevel = 32
 	self.windwalker.energizingBrew.minimumLevel = 36
