@@ -12,22 +12,26 @@ MonkEC.talentSpecWindwalker = 3
 MonkEC.brewmasterStance = 1
 MonkEC.windwalkerStance = 2
 MonkEC.haveHealingElixirs = false
+MonkEC.level30Talent = nil
+MonkEC.level90Talent = nil
 
 -- Resources (chi and energy)
 MonkEC.chiPowerType = 12
 MonkEC.maxChi = 4
 MonkEC.maximumChiGain = 1
 MonkEC.energyPowerType = 3
-MonkEC.energyGeneratedPerGCD_brewmaster = 8
+MonkEC.energyGeneratedPerGCD = 10
 
 -- Buff lengths
 MonkEC.shuffleBuffLength = 8
+MonkEC.energizingBrewBuffLength = 6
 MonkEC.tigerPowerBuffLength = 20
 MonkEC.tigerPowerMaxStack = 3
 MonkEC.weakenedBlowsDebuffLength = 15
 
 -- Buff info
 local elusiveBrewCount, elusiveBrewSecondsLeft, elusiveBrewSpell
+local energizingBrewCount, energizingBrewSecondsLeft, energizingBrewSpell
 local shuffleCount, shuffleSecondsLeft, shuffleSpell
 local tigerPowerCount, tigerPowerSecondsLeft, tigerPowerSpell
 local tigerEyeCount, tigerEyeSecondsLeft, tigerEyeSpell
@@ -167,33 +171,43 @@ MonkEC.external = {
 function MonkEC:InspectSpecialization()
 	MonkEC.talentSpec = GetSpecialization()
 
-	if GetSpellBookItemInfo(MonkEC.talent.ascension.name) ~= nil then
-		MonkEC.maxChi = 5
-	end
-	if GetSpellBookItemInfo(MonkEC.talent.powerStrikes.name) ~= nil then
-		MonkEC.maximumChiGain = 2
-	end
-	
-	MonkEC.haveHealingElixirs = GetSpellBookItemInfo(MonkEC.talent.healingElixirs.name) ~= nil
-
 	if (MonkEC.talentSpec == MonkEC.talentSpecBrewmaster) then
 		MonkEC.cooldownFrame.cooldown[1].spell = MonkEC.brewmaster.avertHarm
 		MonkEC.cooldownFrame.cooldown[2].spell = MonkEC.brewmaster.clash
 		MonkEC.cooldownFrame.cooldown[3].spell = MonkEC.brewmaster.fortifyingBrew
 		MonkEC.cooldownFrame.cooldown[4].spell = MonkEC.brewmaster.guard
+		MonkEC.energyGeneratedPerGCD = 8
 	elseif (MonkEC.talentSpec == MonkEC.talentSpecWindwalker) then
 		MonkEC.cooldownFrame.cooldown[1].spell = MonkEC.windwalker.energizingBrew
 		MonkEC.cooldownFrame.cooldown[2].spell = MonkEC.windwalker.fistsOfFury
-		MonkEC.cooldownFrame.cooldown[3].spell = MonkEC:Level90Talent()
-		MonkEC.cooldownFrame.cooldown[4].spell = MonkEC:Level30Talent()
+		MonkEC.cooldownFrame.cooldown[3].spell = MonkEC.level90Talent
+		MonkEC.cooldownFrame.cooldown[4].spell = MonkEC.level30Talent
+		MonkEC.energyGeneratedPerGCD = 10
 	end	
+
+	MonkEC.haveHealingElixirs = GetSpellBookItemInfo(MonkEC.talent.healingElixirs.name) ~= nil
+
+	if UnitLevel("player") < 91 then
+		MonkEC.maxChi = 4
+	else
+		MonkEC.maxChi = 5
+	end
+
+	if GetSpellBookItemInfo(MonkEC.talent.ascension.name) ~= nil then
+		MonkEC.maxChi = MonkEC.maxChi + 1
+		MonkEC.energyGeneratedPerGCD = MonkEC.energyGeneratedPerGCD * 1.15
+	end
+	
+	if GetSpellBookItemInfo(MonkEC.talent.powerStrikes.name) ~= nil then
+		MonkEC.maximumChiGain = 2
+	end
 end
 
 function MonkEC:SetChiGeneration()
 	self.common.expelHarm.chiGenerated = MonkEC.maximumChiGain
 	self.common.jab.chiGenerated = MonkEC.maximumChiGain
 	self.common.spinningCraneKick.chiGenerated = MonkEC.maximumChiGain
-	self.talent.chiBrew.chiGenerated = MonkEC.maxChi
+	self.talent.chiBrew.chiGenerated = 2
 	self.brewmaster.kegSmash.chiGenerated = MonkEC.maximumChiGain
 end
 
@@ -244,6 +258,18 @@ function MonkEC:SetSpellCooldowns()
 	self.windwalker.risingSunKick.cooldownLength = 8
 end
 
+
+function MonkEC:HasChiBrewTalent()
+	hasChiBrew = false
+	
+	if UnitLevel("player") >= 45 then
+		local name,_,_,_,selected,_ = GetTalentInfo(9)
+		hasChiBrew = selected
+	end
+	
+	return hasChiBrew
+end
+
 function MonkEC:Level30Talent()
 	local spell = nil
 	
@@ -262,24 +288,15 @@ function MonkEC:Level30Talent()
 				end
 			end
 		end
-
-		if spell == nil then -- TODO bug workaround
-			spell = MonkEC.talent.zenSphere
-			self:Print("Can't figure out lvl30 spell.  Forcing to " .. spell.name)
-		end
 	end
 	
 	return spell
 end
+
 function MonkEC:Level90Talent()
 	local spell = nil
 	
-	-- for i = 1,18 do
-		-- local name, texture, tier, column, selected, available = GetTalentInfo(i)
-		-- self:Print("GetTalentInfo " .. i .. " name " .. tostring(name) .. " selected=" .. tostring(selected))
-	-- end
-	
-	local name,_,_,_,selected,_ = GetTalentInfo(16)
+	local name,_,_,_,selected,_ = GetTalentInfo(6)
 	if selected then
 		spell = MonkEC.talent.rushingJadeWind
 	else
@@ -415,6 +432,14 @@ function MonkEC:UpdateTrackedBuffs()
 	else
 		blackoutKickDebuffSecondsLeft = 0
 	end
+
+	energizingBrewBuffSpell = MonkEC.windwalker.energizingBrew
+	_,_,_,energizingBrewBuffCount,_,_,energizingBrewBuffExpirationTime,_,_ = UnitAura("player", energizingBrewBuffSpell.name)
+	if energizingBrewBuffExpirationTime ~= nil then
+		energizingBrewBuffSecondsLeft = energizingBrewBuffExpirationTime - GetTime()
+	else
+		energizingBrewBuffSecondsLeft = 0
+	end
 		
 	mortalWoundsIcon = MonkEC.debuff.mortalWounds
 	_,_,_,mortalWoundsCount,_,_,mortalWoundsExpirationTime,_,_ = UnitDebuff("target", MonkEC.debuff.mortalWounds.name)
@@ -446,6 +471,7 @@ function MonkEC:GatherCharacterState()
 		UnitBuff("player", self.external.fearlessRoar.name) ~= nil or
 		UnitBuff("player", self.external.stillWater.name) ~= nil
 	local state = {
+		hasted = (currentBaseGCD < 1.0),
 		level = UnitLevel("player"),
 		stance = GetShapeshiftForm(),
 		haveHealingElixirs = MonkEC.haveHealingElixirs,
@@ -468,6 +494,7 @@ function MonkEC:GatherCharacterState()
 		weakenedBlowsSecondsLeft = weakenedBlowsSecondsLeft,
 		elusiveBrewCount = elusiveBrewCount,
 		tigerEyeCount = tigerEyeCount,
+		energizingBrewSecondsLeft = energizingBrewSecondsLeft,
 		tigerPowerSecondsLeft = tigerPowerSecondsLeft,
 		breathOfFireSecondsLeft = breathOfFireSecondsLeft,
 		risingSunKickSecondsLeft = risingSunKickSecondsLeft,
@@ -496,6 +523,10 @@ function MonkEC:GatherCharacterState()
 	
 	if state.tigerPowerSecondsLeft == nil then
 		state.tigerPowerSecondsLeft = 0
+	end
+
+	if state.energizingBrewSecondsLeft == nil then
+		state.energizingBrewSecondsLeft = 0
 	end
 	
 	if state.weakenedBlowsSecondsLeft == nil then

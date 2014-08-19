@@ -19,6 +19,10 @@ local inCombat = false
 -- Override the OnUpdate function
 ----------------------------------
 local function OnUpdate(this, elapsed)
+	MonkEC.level30Talent = MonkEC:Level30Talent()
+	MonkEC.level90Talent = MonkEC:Level90Talent()
+	MonkEC:InspectSpecialization()
+
 	timeSinceLastUpdate = timeSinceLastUpdate + elapsed
 	if timeSinceLastUpdate > updateFrequency then	
 		MonkEC:UpdateTrackedBuffs()
@@ -608,7 +612,7 @@ end
 
 function MonkEC:UpdateAbilityQueue()
 	-- Find the current GCD
-	local currentStart,currentBaseGCD = GetSpellCooldown(self.common.jab.id)
+	currentStart,currentBaseGCD = GetSpellCooldown(self.common.jab.id)
 	local currentGCD = 0
 	if (currentStart > 0) then
 		currentGCD = currentBaseGCD - (GetTime() - currentStart)
@@ -619,7 +623,7 @@ function MonkEC:UpdateAbilityQueue()
 	self:UpdateCooldowns(currentGCD, MonkEC.brewmaster)
 	self:UpdateCooldowns(currentGCD, MonkEC.windwalker)
 	
-	local characterState = self:GatherCharacterState()
+	local characterState = self:GatherCharacterState(currentBaseGCD)
 
 	for i = 1,3 do
 		local spell = self:FindNextSpell(currentGCD, characterState)
@@ -629,6 +633,9 @@ function MonkEC:UpdateAbilityQueue()
 end
 
 function MonkEC:EnteredCombat()
+	self:InspectSpecialization()
+	self.level30Talent = self:Level30Talent()
+	self.level90Talent = self:Level90Talent()
 	inCombat = true
 end
 

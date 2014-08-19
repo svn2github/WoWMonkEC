@@ -20,7 +20,6 @@ function MonkEC:OnInitialize()
 		
 	MonkEC:InitializeFrames()
 
-	MonkEC:RegisterEvent("PLAYER_TALENT_UPDATE")	
 	MonkEC:RegisterEvent("PLAYER_REGEN_ENABLED")
 	MonkEC:RegisterEvent("PLAYER_REGEN_DISABLED")
 	MonkEC:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
@@ -34,10 +33,6 @@ function MonkEC:OnEnable()
 end
 
 function MonkEC:OnDisable()
-end
-
-function MonkEC:PLAYER_TALENT_UPDATE()
-	MonkEC:InspectSpecialization()
 end
 
 function MonkEC:PLAYER_REGEN_ENABLED()
