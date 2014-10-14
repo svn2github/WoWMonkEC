@@ -4,7 +4,7 @@ if trueclass ~= "MONK" then return end
 MonkEC.trackableBuffs = {}
 
 function MonkEC:InitializeOptions()
-	MonkEC.trackableBuffs = { WEAKENEDBLOWS, SHUFFLE, ELUSIVEBREW, TIGERPOWER, SANCTUARYOFTHEOX }
+	MonkEC.trackableBuffs = { SHUFFLE, ELUSIVEBREW, TIGERPOWER, SANCTUARYOFTHEOX }
 	
 	local defaults = {
 		profile = {

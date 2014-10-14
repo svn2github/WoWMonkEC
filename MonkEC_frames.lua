@@ -8,11 +8,11 @@ local abilityIconXOffset = { [1] = 8, [2] = 80, [3] = 136 }
 local abilityIconYOffset = 8
 local buffIconXOffset = { [1] = 13, [2] = 57, [3] = 101, [4] = 145 }
 local buffIconYOffset = 8
-local cooldownIconXOffset = { [1] = 13, [2] = 57, [3] = 101, [4] = 145 }
+local cooldownIconXOffset = { [1] = 13, [2] = 57, [3] = 101, [4] = 145, [5] = 189 }
 local cooldownIconYOffset = 8
 
 local timeSinceLastUpdate = 0
-local updateFrequency = 0.1
+local updateFrequency = 0.2
 local inCombat = false
 
 ----------------------------------
@@ -22,6 +22,7 @@ local function OnUpdate(this, elapsed)
 	MonkEC.level30Talent = MonkEC:Level30Talent()
 	MonkEC.level90Talent = MonkEC:Level90Talent()
 	MonkEC:InspectSpecialization()
+	MonkEC:SetChiGeneration()
 
 	timeSinceLastUpdate = timeSinceLastUpdate + elapsed
 	if timeSinceLastUpdate > updateFrequency then	
@@ -122,7 +123,7 @@ function MonkEC:InitBuffFrame()
 	-- Create individual buff/debuffs
 	buffFrame.buff = {
 		self:CreateBuffFrame("MonkECBuffsBuff1", buffFrame, 
-			self.debuff.weakenedBlows, buffIconXOffset[1], buffIconYOffset, iconSize, scale),
+			self.buff.shuffle, buffIconXOffset[1], buffIconYOffset, iconSize, scale),
 		self:CreateBuffFrame("MonkECBuffsBuff2", buffFrame, 
 			self.buff.shuffle, buffIconXOffset[2], buffIconYOffset, iconSize, scale),
 		self:CreateBuffFrame("MonkECBuffsBuff3", buffFrame, 
@@ -191,6 +192,8 @@ function MonkEC:InitCooldownFrame()
 			self.common.blackoutKick, cooldownIconXOffset[3], cooldownIconYOffset, iconSize, scale),
 		self:CreateAbilityFrame("MonkECCooldownsCooldown4", cooldownFrame, 
 			self.common.blackoutKick, cooldownIconXOffset[4], cooldownIconYOffset, iconSize, scale),
+		self:CreateAbilityFrame("MonkECCooldownsCooldown5", cooldownFrame, 
+			self.common.blackoutKick, cooldownIconXOffset[5], cooldownIconYOffset, iconSize, scale),
 	}
 
 	-- Set Frame Strata and load background
@@ -237,8 +240,8 @@ end
 function MonkEC:CreateAbilityFrame(baseName, parentFrame, ability, xOffset, yOffset, size, scale)
 	local abilityFrame = self:CreateSpellFrame(baseName, parentFrame, ability, xOffset, yOffset, size, scale)
 
-	abilityFrame.cooldownFrame = CreateFrame("Cooldown", baseName .. "Cooldown", abilityFrame)	
-	abilityFrame.cooldownFrame:SetAllPoints(abilityFrame)
+	abilityFrame.cooldown = CreateFrame("Cooldown", baseName .. "Cooldown", abilityFrame, "CooldownFrameTemplate")	
+	abilityFrame.cooldown:SetAllPoints()
 	
 	return abilityFrame
 end
@@ -339,7 +342,7 @@ end
 
 ---------------------------------
 -- Scale of MonkEC/Buffs frames
----------------------------------							 
+---------------------------------
 function MonkEC:SetScale(info, scale)
 	if (tonumber(scale) > 1.5 or tonumber(scale) < 0.5) then
 		self:Print(BADSCALEVALUE .. " (0.5-1.5)")
@@ -422,7 +425,7 @@ function MonkEC:ScaleCooldownFrame()
 	frame:SetWidth(self.db.profile.cooldowns_width * spellScale)
 	frame:SetHeight(self.db.profile.cooldowns_height * spellScale) 
 	
-	for i = 1,4 do
+	for i = 1,5 do
 		self:ScaleSpell(frame.cooldown[i], frame, cooldownIconXOffset[i], cooldownIconYOffset, spellSize, spellScale)
 	end
 end
@@ -448,7 +451,7 @@ function MonkEC:RefreshTextures()
 		end
 	end
 	
-	for i = 1,4 do
+	for i = 1,5 do
 		if self.cooldownFrame.cooldown[i].spell == nil then
 			self.cooldownFrame.cooldown[i].icon:SetTexture(nil)
 		else
@@ -465,24 +468,24 @@ function MonkEC:UpdateCDs()
 		if self.frame.abilityFrame[i].spell ~= nil then
 			local start, duration = GetSpellCooldown(self.frame.abilityFrame[i].spell.id)
 			if duration and duration > 0 and inCombat == true and self.frame.abilityFrame[i]:IsShown() ~= nil then
-				self.frame.abilityFrame[i].cooldownFrame:SetCooldown(start, duration)
-				self.frame.abilityFrame[i].cooldownFrame:Show()
+				self.frame.abilityFrame[i].cooldown:SetCooldown(start, duration)
+				self.frame.abilityFrame[i].cooldown:Show()
 			else
-				self.frame.abilityFrame[i].cooldownFrame:Hide()
+				self.frame.abilityFrame[i].cooldown:Hide()
 			end
 		end
 	end
 	
-	for i = 1,4 do
+	for i = 1,5 do
 		local spellFrame = self.cooldownFrame.cooldown[i]
 		
 		if spellFrame.spell ~= nil then
 			local start, duration = GetSpellCooldown(spellFrame.spell.id)
 			if duration and duration > 0 and inCombat == true and spellFrame:IsShown() ~= nil then
-				spellFrame.cooldownFrame:SetCooldown(start, duration)
-				spellFrame.cooldownFrame:Show()
+				spellFrame.cooldown:SetCooldown(start, duration)
+				spellFrame.cooldown:Show()
 			else
-				spellFrame.cooldownFrame:Hide()
+				spellFrame.cooldown:Hide()
 			end
 		end
 	end
@@ -633,9 +636,6 @@ function MonkEC:UpdateAbilityQueue()
 end
 
 function MonkEC:EnteredCombat()
-	self:InspectSpecialization()
-	self.level30Talent = self:Level30Talent()
-	self.level90Talent = self:Level90Talent()
 	inCombat = true
 end
 

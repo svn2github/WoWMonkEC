@@ -50,12 +50,10 @@ function MonkEC:CreatePriorityLists()
 			condition = function(self, characterState, currentGCD) 
 				return (self.db.profile.suggest_touchOfDeath == true) and
 						UnitExists("target") and 
-						(UnitHealth("player") >= UnitHealth("target")); 
-			end, 
-		},
-		{	spell = self.common.legacyOfTheEmperor, 
-			condition = function(self, characterState, currentGCD) 
-				return not self:PlayerHasBuff(self.common.legacyOfTheEmperor, characterState)
+						(
+							(UnitHealth("player") >= UnitHealth("target")) or
+							((UnitHealthMax("target") / UnitHealth("target")) > 10)
+						); 
 			end, 
 		},
 		{	spell = self.brewmaster.stanceOfTheSturdyOx, 
@@ -72,8 +70,7 @@ function MonkEC:CreatePriorityLists()
 		{	spell = self.brewmaster.dizzyingHaze, 
 			condition = function(self, characterState, currentGCD) 
 				return UnitExists("target") and 
-						not characterState.inMeleeRange and 
-						self:DebuffWearingOffSoon(self.debuff.weakenedBlows, characterState)
+						not characterState.inMeleeRange
 				end, 
 		},
 		{	spell = self.brewmaster.clash, 
@@ -116,10 +113,9 @@ function MonkEC:CreatePriorityLists()
 						self:DebuffWearingOffSoon(self.buff.tigerPower, characterState)
 			end, 
 		},
-		{	spell = self.talent.chiBrew, 
+		{	spell = function(self) return self:Level45Talent() end, 
 			condition = function(self, characterState, currentGCD) 
 				return UnitExists("target") and
-						self:HasChiBrewTalent() and
 						self:ChiLow(characterState) and
 						not self:EnergyHigh(characterState)
 			end, 
@@ -164,12 +160,10 @@ function MonkEC:CreatePriorityLists()
 			condition = function(self, characterState, currentGCD) 
 				return (self.db.profile.suggest_touchOfDeath == true) and
 						UnitExists("target") and 
-						(UnitHealth("player") >= UnitHealth("target")); 
-			end, 
-		},
-		{	spell = self.common.legacyOfTheEmperor, 
-			condition = function(self, characterState) 
-				return not self:PlayerHasBuff(self.common.legacyOfTheEmperor, characterState)
+						(
+							(UnitHealth("player") >= UnitHealth("target")) or
+							((UnitHealthMax("target") / UnitHealth("target")) > 10)
+						); 
 			end, 
 		},
 		{	spell = self.windwalker.legacyOfTheWhiteTiger, 
@@ -183,12 +177,6 @@ function MonkEC:CreatePriorityLists()
 			end, 
 		},
 		{	spell = self.windwalker.flyingSerpentKick, 
-			condition = function(self, characterState, currentGCD) 
-				return UnitExists("target") and 
-						not characterState.inMeleeRange
-			end, 
-		},
-		{	spell = self.windwalker.spinningFireBlossom, 
 			condition = function(self, characterState, currentGCD) 
 				return UnitExists("target") and 
 						not characterState.inMeleeRange
@@ -228,7 +216,17 @@ function MonkEC:CreatePriorityLists()
 						self:BuffStackedTo(self.buff.tigerEye, 10, characterState)
 			end, 
 		},
-		{	spell = self.talent.chiBrew, 
+		{	spell = self.windwalker.fistsOfFury, 
+			condition = function(self, characterState, currentGCD) 
+				return UnitExists("target") and
+						not self:SpellWillBeOffCooldown(self.windwalker.risingSunKick, currentGCD + MonkEC.fistsOfFuryDuration) and
+						characterState.energy < 40 and 
+						not self:BuffWearingOffBefore(self.buff.tigerPower, characterState, MonkEC.fistsOfFuryDuration) and
+						not MonkEC:PlayerHasBuff(self.windwalker.energizingBrew, characterState) and
+						not MonkEC:Hasted(characterState)
+			end, 
+		},
+		{	spell = function(self) return self:Level45Talent() end, 
 			condition = function(self, characterState, currentGCD) 
 				return UnitExists("target") and
 						self:ChiLow(characterState) and
@@ -238,16 +236,15 @@ function MonkEC:CreatePriorityLists()
 		{	spell = self.windwalker.energizingBrew, 
 			condition = function(self, characterState, currentGCD) 
 				return UnitExists("target") and 
-						self:EnergyLow(characterState)
+						self:EnergyLow(characterState) and
+						not MonkEC:Hasted(characterState)
 			end, 
 		},
-		{	spell = self.windwalker.fistsOfFury, 
+		{	spell = function(self) return self:Level100Talent() end, 
 			condition = function(self, characterState, currentGCD) 
 				return UnitExists("target") and
-						not self:SpellWillBeOffCooldown(self.windwalker.risingSunKick, currentGCD + MonkEC.fistsOfFuryDuration) and
-						characterState.energy < 50 and 
-						not self:BuffWearingOffBefore(self.buff.tigerPower, characterState, MonkEC.fistsOfFuryDuration) and
-						not MonkEC:PlayerHasBuff(self.windwalker.energizingBrew, characterState)
+						not self:ChiLow(characterState) and
+						not self:EnergyHigh(characterState)
 			end, 
 		},
 		{	spell = self.common.blackoutKick, 
@@ -272,6 +269,11 @@ function MonkEC:CreatePriorityLists()
 				return UnitExists("target")
 			end, 
 		},
+		{	spell = function(self) return self:Level30Talent() end, 
+			condition = function(self, characterState, currentGCD) 
+				return self:DamagedEnough(characterState) 
+			end, 
+		},
 	}
 end
 
@@ -280,8 +282,10 @@ function MonkEC:FindNextSpell(currentGCD, characterState)
 	local spell = nil
 	
 	if MonkEC.talentSpec == MonkEC.talentSpecBrewmaster then
+		self.common.tigerPalm.cost = 0 --temp
 		priorities = brewmasterPriorities
 	else
+		self.common.tigerPalm.cost = 1 --temp
 		priorities = windwalkerPriorities
 	end
 
@@ -307,13 +311,15 @@ function MonkEC:NextGCD(characterState)
 	characterState.shuffleSecondsLeft = characterState.shuffleSecondsLeft - MonkEC.theGCD
 	characterState.tigerPowerSecondsLeft = characterState.tigerPowerSecondsLeft - MonkEC.theGCD
 	characterState.energizingBrewSecondsLeft = characterState.energizingBrewSecondsLeft - MonkEC.theGCD
-	characterState.weakenedBlowsSecondsLeft = characterState.weakenedBlowsSecondsLeft - MonkEC.theGCD
 	characterState.risingSunKickSecondsLeft = characterState.risingSunKickSecondsLeft - MonkEC.theGCD
 	characterState.blackoutKickDebuffSecondsLeft = characterState.blackoutKickDebuffSecondsLeft - MonkEC.theGCD
 end
 
 function MonkEC:ConsumePowerForSpell(spell, characterState)
 	local _, _, _, cost, _, powerType = GetSpellInfo(spell.id); 
+-- temp
+cost = spell.cost
+powerType = spell.powerType
 
 	if powerType == MonkEC.energyPowerType then
 		characterState.energy = characterState.energy - cost
@@ -324,10 +330,16 @@ end
 
 function MonkEC:GenerateChiFromSpell(spell, characterState)
 	if spell.id == self.common.expelHarm.id or
-		spell.id == self.common.jab.id or
 		spell.id == self.common.spinningCraneKick.id or
-		spell.id == self.brewmaster.kegSmash.id then
+		spell.id == self.brewmaster.kegSmash.id 
+	then
 		characterState.chi = characterState.chi + 1
+	elseif spell.id == self.common.jab.id then
+		if characterState.stance == MonkEC.brewmasterStance then
+			characterState.chi = characterState.chi + 1
+		else
+			characterState.chi = characterState.chi + 2
+		end
 	elseif spell.id == self.talent.chiBrew.id then
 		characterState.chi = characterState.chi + 2
 	end
@@ -338,8 +350,6 @@ function MonkEC:UpdateBuffsForSpell(spell, characterState)
 		characterState.playerHasSanctuaryOfTheOx = true
 	elseif spell.id == self.brewmaster.breathOfFire.id then
 		characterState.breathOfFireSecondsLeft = MonkEC.breathOfFireDebuffLength
-	elseif spell.id == self.brewmaster.dizzyingHaze.id or spell.id == self.brewmaster.kegSmash.id then
-		characterState.weakenedBlowsSecondsLeft = MonkEC.weakenedBlowsDebuffLength
 	elseif spell.id == self.brewmaster.elusiveBrew.id then
 		characterState.elusiveBrewCount = 0;
 	elseif spell.id == self.brewmaster.purifyingBrew.id then
@@ -485,11 +495,7 @@ end
 function MonkEC:DebuffWearingOffBefore(spell, characterState, duration)
 	local wearingOffBefore = true
 	
-	if spell.id == self.debuff.weakenedBlows.id then
-		if characterState.weakenedBlowsSecondsLeft > duration then
-			wearingOffBefore = false
-		end
-	elseif spell.id == self.brewmaster.breathOfFire.id then
+	if spell.id == self.brewmaster.breathOfFire.id then
 		if characterState.breathOfFireSecondsLeft > duration then
 			wearingOffBefore = false
 		end
@@ -547,6 +553,15 @@ end
 
 function MonkEC:HasEnoughResources(spell, characterState)
 	local _, _, _, cost, _, powerType = GetSpellInfo(spell.id); 
+-- temp
+cost = spell.cost
+if (cost == nil) then
+	cost = 0
+end
+powerType = spell.powerType
+if (powerType == nil) then
+	powerType = 0
+end
 
 	local haveEnoughResources = true
 	if powerType == MonkEC.energyPowerType then
@@ -574,9 +589,7 @@ end
 function MonkEC:PlayerHasBuff(spell, characterState)
 	local hasBuff = false
 
-	if spell.id == self.common.legacyOfTheEmperor.id then
-		hasBuff = characterState.playerHasLegacyOfTheEmperor
-	elseif spell.id == self.buff.tigerPower.id then
+	if spell.id == self.buff.tigerPower.id then
 		hasBuff = characterState.tigerPowerSecondsLeft > 0
 	elseif MonkEC.talentSpec == MonkEC.talentSpecBrewmaster then
 		if spell.id == self.buff.sanctuaryOfTheOx.id then

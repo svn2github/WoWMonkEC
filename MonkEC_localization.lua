@@ -39,7 +39,6 @@ TARGETCHIDESCRIPTION = "Sets the amount of chi that MonkEC will try to maintain"
 TIGERPOWER = "Tiger Power"
 TOUCHOFDEATH = "Touch of Death"
 TOUCHOFDEATHCHECKBOXDESCRIPTION = "Will suggest using Touch of Death."
-WEAKENEDBLOWS = "Weakened Blows"
 XCOORDINATE = "X-Coordinate"
 XCOORDINATEDESCRIPTION = "Sets the X-Coordinate of the MonkEC Frame"
 YCOORDINATE = "Y-Coordinate"
@@ -163,9 +162,6 @@ TOUCHOFDEATH = "Ber\195\188hrung des Todes"
 
 -- Needs review
 TOUCHOFDEATHCHECKBOXDESCRIPTION = "Schl\195\164gt die Benutzung von \"Ber\195\188hrung des Todes\" vor"
-
--- Needs review
-WEAKENEDBLOWS = "Kampfesm\195\188digkeit"
 
 -- Needs review
 XCOORDINATE = "X-Koordinate"
@@ -307,9 +303,6 @@ TOUCHOFDEATH = "Toucher mortel"
 TOUCHOFDEATHCHECKBOXDESCRIPTION = "Sugg\195\168re l'utilisation de Toucher mortel"
 
 -- Needs review
-WEAKENEDBLOWS = "Coups affaiblis"
-
--- Needs review
 XCOORDINATE = "Abscisse"
 
 -- Needs review
@@ -449,9 +442,6 @@ TOUCHOFDEATH = "\208\161\208\188\208\181\209\128\209\130\208\181\208\187\209\140
 -- Needs review
 TOUCHOFDEATHCHECKBOXDESCRIPTION = "\208\159\209\128\208\181\208\180\208\191\208\190\208\187\208\176\208\179\208\176\209\130\209\140 \208\184\209\129\208\191\208\190\208\187\209\140\208\183\208\190\208\178\208\176\208\189\208\184\208\181 \208\154\208\176\209\129\208\176\208\189\208\184\209\143 \209\129\208\188\208\181\209\128\209\130\208\184"
 
--- Missing translation
--- WEAKENEDBLOWS = ""
-
 -- Needs review
 XCOORDINATE = "\208\154\208\190\208\190\209\128\208\180\208\184\208\189\208\176\209\130\208\176 X"
 
@@ -589,9 +579,6 @@ SHOWONLYINCOMBATDESCRIPTION = "\229\143\170\230\156\137\229\156\168\230\136\152\
 
 -- Missing translation
 -- TOUCHOFDEATHCHECKBOXDESCRIPTION = ""
-
--- Missing translation
--- WEAKENEDBLOWS = ""
 
 -- Needs review
 XCOORDINATE = "\230\176\180\229\185\179\229\157\144\230\160\135"

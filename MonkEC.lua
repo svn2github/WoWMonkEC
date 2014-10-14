@@ -13,9 +13,10 @@ local fonts = media:List("font")
 function MonkEC:OnInitialize()
 	MonkEC:InitializeOptions()
 	
-	MonkEC:SetChiGeneration()
 	MonkEC:SetMinimumLevel()
 	MonkEC:SetSpellCooldowns()
+	--temp
+	MonkEC:SetSpellCosts()
 	MonkEC:CreatePriorityLists();
 		
 	MonkEC:InitializeFrames()
