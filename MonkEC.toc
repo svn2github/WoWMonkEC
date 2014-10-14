@@ -2,7 +2,7 @@
 ## Title: MonkEC
 ## Notes: Monk Brewmaster/WindWalker Priority and Buff/Debuff Tracking Tool
 ## Author: tmlennan (Underwhelmed of Kul Tiras-US)
-## Version: 1.2.6
+## Version: 1.2.7
 ## SavedVariables: MonkECDB
 ## OptionalDeps Age3, LibSharedMedia-3.0
 
