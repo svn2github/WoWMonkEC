@@ -11,37 +11,29 @@ local buffIconYOffset = 8
 local cooldownIconXOffset = { [1] = 13, [2] = 57, [3] = 101, [4] = 145, [5] = 189 }
 local cooldownIconYOffset = 8
 
-local timeSinceLastUpdate = 0
+--local timeSinceLastUpdate = 0
 local updateFrequency = 0.2
 local inCombat = false
 
-----------------------------------
--- Override the OnUpdate function
-----------------------------------
-local function OnUpdate(this, elapsed)
+function MonkEC:Update()
 	MonkEC.level30Talent = MonkEC:Level30Talent()
 	MonkEC.level90Talent = MonkEC:Level90Talent()
 	MonkEC:InspectSpecialization()
 	MonkEC:SetChiGeneration()
 
-	timeSinceLastUpdate = timeSinceLastUpdate + elapsed
-	if timeSinceLastUpdate > updateFrequency then	
-		MonkEC:UpdateTrackedBuffs()
-		MonkEC:UpdateAbilityQueue()
-		MonkEC:UpdateCDs()
-		MonkEC:ClearOldTargets()
+	MonkEC:UpdateTrackedBuffs()
+	MonkEC:UpdateAbilityQueue()
+	MonkEC:UpdateCDs()
+	MonkEC:ClearOldTargets()
 	
-		if (MonkEC.buffFrame:IsShown() ~= nil) then
-			MonkEC:UpdateBuffFrame()
-		end
-		
-		-- Refresh Textures
-		MonkEC:RefreshTextures()
-		
-		MonkEC:UpdateFrameVisibility()
-
-		timeSinceLastUpdate = 0
+	if (MonkEC.buffFrame:IsShown() ~= nil) then
+		MonkEC:UpdateBuffFrame()
 	end
+	
+	-- Refresh Textures
+	MonkEC:RefreshTextures()
+	
+	MonkEC:UpdateFrameVisibility()
 end
 
 -----------------------------------------------
@@ -108,8 +100,6 @@ function MonkEC:InitAbilityFrame()
 	else
 		baseFrame:EnableMouse(true)
 	end
-
-	MonkEC.frame:SetScript("OnUpdate", OnUpdate)
 end
 
 function MonkEC:InitBuffFrame()
@@ -171,8 +161,6 @@ function MonkEC:InitBuffFrame()
 	else
 		buffFrame:EnableMouse(true)
 	end
-
-	MonkEC.buffFrame:SetScript("OnUpdate", OnUpdate)
 end
 
 function MonkEC:InitCooldownFrame()
@@ -292,7 +280,8 @@ end
 function MonkEC:UpdateFrameVisibility()
 	local showAbilityFrame = false
 	local showBuffFrame = false
-	
+	local showCooldownFrame = false
+
 	if MonkEC.talentSpec == nil then
 		self:Print("All frames hidden until a spec is chosen.")
 	else

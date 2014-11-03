@@ -3,7 +3,6 @@ if trueclass ~= "MONK" then return end
 
 -- Thresholds
 local castHealThreshold = 80
-local dumpChiThreshold	= 4
 
 -- Priority lists
 local desperationPriorities
@@ -226,6 +225,11 @@ function MonkEC:CreatePriorityLists()
 						not MonkEC:Hasted(characterState)
 			end, 
 		},
+		{	spell = function(self) return self:Level30Talent() end, 
+			condition = function(self, characterState, currentGCD) 
+				return UnitExists("target")
+			end, 
+		},
 		{	spell = function(self) return self:Level45Talent() end, 
 			condition = function(self, characterState, currentGCD) 
 				return UnitExists("target") and
@@ -272,6 +276,11 @@ function MonkEC:CreatePriorityLists()
 		{	spell = function(self) return self:Level30Talent() end, 
 			condition = function(self, characterState, currentGCD) 
 				return self:DamagedEnough(characterState) 
+			end, 
+		},
+		{	spell = self.windwalker.flyingSerpentKick, 
+			condition = function(self, characterState, currentGCD) 
+				return UnitExists("target")
 			end, 
 		},
 	}
@@ -335,7 +344,7 @@ function MonkEC:GenerateChiFromSpell(spell, characterState)
 	then
 		characterState.chi = characterState.chi + 1
 	elseif spell.id == self.common.jab.id then
-		if characterState.stance == MonkEC.brewmasterStance then
+		if characterState.talentSpec == MonkEC.brewmasterStance then
 			characterState.chi = characterState.chi + 1
 		else
 			characterState.chi = characterState.chi + 2
@@ -517,7 +526,7 @@ function MonkEC:DamagedEnough(characterState)
 end
 
 function MonkEC:DumpChi(characterState)
-	return characterState.chi >= dumpChiThreshold
+	return characterState.chi > (MonkEC.maxChi - 2)
 end
 
 function MonkEC:FindNextSpellFrom(priorities, currentGCD, characterState)

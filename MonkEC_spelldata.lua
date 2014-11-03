@@ -205,7 +205,7 @@ function MonkEC:SetChiGeneration()
 	self.talent.chiBrew.chiGenerated = 2
 	self.brewmaster.kegSmash.chiGenerated = MonkEC.maximumChiGain
 	self.common.jab.chiGenerated = MonkEC.maximumChiGain
-	if MonkEC.talentSpec == MonkEC.talentSpecBrewmaster then
+	if MonkEC.talentSpec == MonkEC.talentSpecWindwalker then
 		self.common.jab.chiGenerated = self.common.jab.chiGenerated + 1
 	end
 end
@@ -481,7 +481,9 @@ function MonkEC:GatherCharacterState(currentBaseGCD)
 		UnitBuff("player", self.external.terrifyingRoar.name) ~= nil or
 		UnitBuff("player", self.external.fearlessRoar.name) ~= nil or
 		UnitBuff("player", self.external.stillWater.name) ~= nil
+	
 	local state = {
+		talentSpec = MonkEC.talentSpec,
 		level = UnitLevel("player"),
 		stance = GetShapeshiftForm(),
 		hasted = playerHasHasteBuff,

@@ -7,6 +7,12 @@ local media = LibStub("LibSharedMedia-3.0")
 local textures = media:List("statusbar")
 local fonts = media:List("font")
 
+function OnUpdate()
+	MonkEC:Update()
+	
+	C_Timer.After(0.1, OnUpdate)
+end
+
 ---------------------------------------------
 -- On Initialized, Enable and Disable Methods
 ---------------------------------------------
@@ -27,8 +33,10 @@ function MonkEC:OnInitialize()
 	
 	MonkEC:RegisterChatCommand("monkec", "ChatCommand")
 	MonkEC:Print(STARTUPMESSAGE)
+	
+	C_Timer.After(0.1, OnUpdate)
 end
- 
+
 function MonkEC:OnEnable()
 	MonkEC:InspectSpecialization()
 end
